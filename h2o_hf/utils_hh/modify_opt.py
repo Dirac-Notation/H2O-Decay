@@ -156,20 +156,25 @@ class OPTAttention_Mask(nn.Module):
         attn_weights_devices = attn_weights.device
 
         # attn_weights (heads, q-tokens, k-tokens) -> q 방향으로 합치기
+        penalty = 0.0
+
         if attn_weights.shape[1] > 1:
-            current_scores_sum = attn_weights.sum(1) + 0.3*torch.arange(attn_weights.shape[1]-1, -1, -1).to(dtype_attn_weights).to(attn_weights_devices) # (heads, k-tokens)
+            current_scores_sum = attn_weights.sum(1) - penalty*torch.arange(attn_weights.shape[2]-1, -1, -1).to(dtype_attn_weights).to(attn_weights_devices) # (heads, k-tokens)
         else:
             current_scores_sum = attn_weights.sum(1) # (heads, k-tokens)
-        
+
         # Accumulate attention scores
         if not self.previous_scores == None:
-            current_scores_sum[:, :-1] += self.previous_scores - 0.3 #(Enlarge Sequence)
+            current_scores_sum[:, :-1] += self.previous_scores - penalty #(Enlarge Sequence)
         else:
             self.heavy_budget = int(self.heavy_budget_ratio * current_scores_sum.shape[-1])
             self.recent_budget = int(self.recent_budget_ratio * current_scores_sum.shape[-1])
             self.cache_budget = self.heavy_budget + self.recent_budget
             self.cache_budget_records.append(self.cache_budget)
             self.input_length.append(attn_weights.shape[-1])
+
+        torch.set_printoptions(sci_mode=False)
+        print(current_scores_sum[0])
 
         self.previous_scores = current_scores_sum #(heads, k-tokens)
         attn_mask = torch.ones(current_scores_sum.shape[0], current_scores_sum.shape[1]+1).to(dtype_attn_weights).to(attn_weights_devices)
