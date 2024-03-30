@@ -155,9 +155,9 @@ def main():
     model.half().eval().cuda()
 
     generate_ids_hh = model.generate(input_ids, max_new_tokens=args.length)
-    # result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    # print("################## Generated Context with Heavy Hitter Oracle ###################")
-    # print(result_hh)
+    result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    print("################## Generated Context with Heavy Hitter Oracle ###################")
+    print(result_hh)
 
 
 if __name__ == "__main__":

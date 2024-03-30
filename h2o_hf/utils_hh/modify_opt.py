@@ -156,10 +156,10 @@ class OPTAttention_Mask(nn.Module):
         attn_weights_devices = attn_weights.device
 
         # attn_weights (heads, q-tokens, k-tokens) -> q 방향으로 합치기
-        version = 1
+        version = 3
 
         if (version == 1):
-            penalty = 0.00
+            penalty = 0.01
 
             if attn_weights.shape[1] > 1:
                 current_scores_sum = attn_weights.sum(1) - penalty*torch.arange(attn_weights.shape[2]-1, -1, -1).to(dtype_attn_weights).to(attn_weights_devices) # (heads, k-tokens)
@@ -228,6 +228,46 @@ class OPTAttention_Mask(nn.Module):
                 
                 # if (self.previous_scores.shape[-1] > 70):
                 #     import pdb; pdb.set_trace()
+        
+        elif (version == 3):
+            penalty_ratio = 0.01
+
+            if attn_weights.shape[1] > 1:
+                current_scores_sum = torch.zeros(attn_weights[:,0,:].shape).to(dtype_attn_weights).to(attn_weights_devices)
+                for i in range(attn_weights.shape[1]):
+                    current_scores_sum *= penalty_ratio
+                    current_scores_sum += attn_weights[:,i,:]
+            else:
+                current_scores_sum = attn_weights.sum(1) # (heads, k-tokens)
+
+            # Accumulate attention scores
+            if not self.previous_scores == None:
+                current_scores_sum[:, :-1] += penalty_ratio*self.previous_scores #(Enlarge Sequence)
+            else:
+                self.heavy_budget = int(self.heavy_budget_ratio * current_scores_sum.shape[-1])
+                self.recent_budget = int(self.recent_budget_ratio * current_scores_sum.shape[-1])
+                self.cache_budget = self.heavy_budget + self.recent_budget
+                self.cache_budget_records.append(self.cache_budget)
+                self.input_length.append(attn_weights.shape[-1])
+
+            self.previous_scores = current_scores_sum #(heads, k-tokens)
+            attn_mask = torch.zeros(current_scores_sum.shape[0], current_scores_sum.shape[1]+1).to(dtype_attn_weights).to(attn_weights_devices)
+
+            attn_tokens_all = self.previous_scores.shape[-1]
+            if attn_tokens_all > self.cache_budget:
+                # activate most recent k-cache
+                if not self.recent_budget == 0:
+                    attn_mask[:, -self.recent_budget:] = 1
+                    selected_set = self.previous_scores[:, :-self.recent_budget]
+                else:
+                    # activate historical best self.cache_budget - self.recent_budget tokens.
+                    # self.previous_scores # (k-Cache - 1)
+                    attn_mask[:, -1] = 1
+                    selected_set = self.previous_scores[:, :-1]
+
+                if not self.heavy_budget == 0:
+                    _, keep_topk = selected_set.topk(k=self.heavy_budget, dim=-1, largest=True)
+                    attn_mask = attn_mask.scatter(-1, keep_topk, 1)
 
         self.attention_masks_next = attn_mask.unsqueeze(1)
 
@@ -276,7 +316,10 @@ class OPTAttention_Mask(nn.Module):
         torch.set_printoptions(sci_mode=False, profile="full")
         # print((selected_set/torch.arange(self.previous_scores.shape[-1], self.recent_budget, -1).to(dtype_attn_weights).to(attn_weights_devices))[0])
         # print(self.previous_scores[0])
-        print(keep_topk[0])
+        print(attn_mask[0])
+
+        # if (attn_mask.shape[-1] > 90):
+        #     import pdb; pdb.set_trace()
 
         return attn_output, attn_weights_reshaped, past_key_value
 
