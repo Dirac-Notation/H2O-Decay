@@ -153,7 +153,7 @@ def main():
     model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config)
     model.load_state_dict(checkpoint)
     model.half().eval().cuda()
-
+    print(input_ids.shape)
     generate_ids_hh = model.generate(input_ids, max_new_tokens=args.length)
     result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     print("################## Generated Context with Heavy Hitter Oracle ###################")

@@ -156,9 +156,9 @@ class OPTAttention_Mask(nn.Module):
         attn_weights_devices = attn_weights.device
 
         # attn_weights (heads, q-tokens, k-tokens) -> q 방향으로 합치기
-        version = 1
+        version = 3
 
-        if (version == 1):
+        if (version == 1): # default
             penalty = 0.00
 
             if attn_weights.shape[1] > 1:
@@ -195,7 +195,7 @@ class OPTAttention_Mask(nn.Module):
                     _, keep_topk = selected_set.topk(k=self.heavy_budget, dim=-1, largest=True)
                     attn_mask = attn_mask.scatter(-1, keep_topk, 1)
 
-        elif (version == 2):
+        elif (version == 2): # divide
             p = 1
 
             current_scores_sum = attn_weights.sum(1) # 지금 (heads, k-tokens)
@@ -234,7 +234,7 @@ class OPTAttention_Mask(nn.Module):
                         _, keep_topk = ((selected_set**p/tmp)**(1/p)).topk(k=self.heavy_budget-1, dim=-1, largest=True)
                         attn_mask = attn_mask.scatter(-1, keep_topk, 1)
 
-        elif (version == 3):
+        elif (version == 3): # decay
             p = 0.30
 
             if attn_weights.shape[1] > 1:

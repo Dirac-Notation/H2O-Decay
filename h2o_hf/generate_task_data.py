@@ -56,12 +56,12 @@ if __name__ == '__main__':
     t = DryRunner()
     adaptor = EvalHarnessAdaptor(t, seq, total_batch, shrink=pe != "fixed")
     results = evaluator.evaluate(adaptor, tasks.get_task_dict([args.task_name
-                                                            #"lambada_openai",
-                                                            #"piqa",
-                                                            #"hellaswag",
-                                                            #"winogrande",
-                                                            #"mathqa",
-                                                            #"pubmedqa",
+                                                            # "lambada_openai",
+                                                            # "piqa",
+                                                            # "hellaswag",
+                                                            # "winogrande",
+                                                            # "mathqa",
+                                                            # "pubmedqa",
                                                             # "boolq",
                                                             # "cb",
                                                             # "copa",

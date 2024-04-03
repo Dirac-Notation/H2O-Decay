@@ -2,7 +2,7 @@ from functools import partial
 
 import os
 import transformers
-from lm_eval.base import LM
+from lm_eval.api.model import LM
 from tqdm import tqdm
 import numpy as np
 

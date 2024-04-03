@@ -15,18 +15,9 @@ from rouge import Rouge
 import logging
 import numpy as np
 
-from lost_in_the_middle.prompting import (
-    Document,
-    get_closedbook_qa_prompt,
-    get_qa_prompt,
-    get_qa_prompt_index
-)
-
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 from transformers.models.llama.configuration_llama import LlamaConfig
 from utils_real_drop.modify_llama import H2OLlamaForCausalLM, H2OLlamaAttention
-
-
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
