@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pip install torch transformers tqdm
+pip install torch transformers tqdm wheel xopen matplotlib rouge

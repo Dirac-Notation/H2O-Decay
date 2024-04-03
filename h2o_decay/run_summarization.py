@@ -17,7 +17,17 @@ import numpy as np
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 from transformers.models.llama.configuration_llama import LlamaConfig
-from utils_real_drop.modify_llama import H2OLlamaForCausalLM, H2OLlamaAttention
+
+from utils_hh.modify_llama import convert_kvcache_llama_heavy_recent, LlamaAttention_heavy_hitter
+from utils_hh.modify_gptneox import convert_kvcache_gpt_neox_heavy_recent, GPTNeoXAttention_Mask
+from utils_hh.modify_opt import convert_kvcache_opt_heavy_recent, reset_mask, OPTAttention_Mask
+
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    datefmt="%m/%d/%Y %H:%M:%S",
+    level=logging.INFO,
+)
+logger = logging.getLogger(__name__)
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
@@ -31,13 +41,15 @@ def set_seed(args):
 
 
 ENABLE_Heavy_Hitter_FUNCTIONS = {
-    "llama": None,
-    "llama_h2o": H2OLlamaForCausalLM
+    "llama": convert_kvcache_llama_heavy_recent,
+    "opt": convert_kvcache_opt_heavy_recent,
+    "gpt_neox": convert_kvcache_gpt_neox_heavy_recent,
 }
 
 TAGET_MODULE = {
-    "llama": None,
-    "llama_h2o": H2OLlamaAttention
+    "llama": LlamaAttention_heavy_hitter,
+    "opt": GPTNeoXAttention_Mask,
+    "gpt_neox": OPTAttention_Mask,
 }
 
 if __name__ == '__main__':
@@ -47,11 +59,13 @@ if __name__ == '__main__':
     parser.add_argument("--input_path", type=str, default="")
     parser.add_argument("--output_path", type=str, default="")
 
-    parser.add_argument("--model_name", type=str, default="")
-    parser.add_argument("--cache_dir", type=str, default=None)
+    parser.add_argument("--model_arch", type=str, default='llama')
+    parser.add_argument("--model_name", type=str, default='huggyllama/llama-13b')
+    parser.add_argument("--cache_dir", type=str, default='../../checkpoint/')
 
-    parser.add_argument("--hh_size", type=int, default=1024)
-    parser.add_argument("--recent_size", type=int, default=1024)
+    parser.add_argument("--heavy_ratio", type=float, default=0.1)
+    parser.add_argument("--recent_ratio", type=float, default=0.1)
+    parser.add_argument("--version", type=int, default=1)
 
     parser.add_argument('--enable_h2o_cache', action='store_true')
 
@@ -69,6 +83,8 @@ if __name__ == '__main__':
 
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = 0 if args.no_cuda else torch.cuda.device_count()
+
+    logger.warning(f"device: {args.device}, n_gpu: {args.n_gpu}, 16-bits training: {args.fp16}")
     set_seed(args)
 
     model_name = args.model_name
@@ -76,19 +92,22 @@ if __name__ == '__main__':
     output_path = args.output_path
 
     config = AutoConfig.from_pretrained(model_name, cache_dir=args.cache_dir)
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, cache_dir=args.cache_dir)
 
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, cache_dir=args.cache_dir)
     if args.batch_size>1:
         tokenizer.pad_token = tokenizer.eos_token
 
+    model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=args.cache_dir)
+
     if args.enable_h2o_cache:
         print('Enabling H2O KV cache')
-        config.hh_size = args.hh_size
-        config.recent_size = args.recent_size
-        model = ENABLE_Heavy_Hitter_FUNCTIONS['llama_h2o'].from_pretrained(model_name, config=config,
-                                                                            cache_dir=args.cache_dir)
-    else:
-        model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=args.cache_dir)
+        config.heavy_ratio = args.heavy_ratio
+        config.recent_ratio = args.recent_ratio
+        config.version = args.version
+        
+        checkpoint = copy.deepcopy(model.state_dict())
+        model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config=config)
+        model.load_state_dict(checkpoint)
 
     model.half().eval().cuda()
 
@@ -118,7 +137,7 @@ if __name__ == '__main__':
             stop = request['stop']
 
             input_ids = tokenizer(prompt, add_special_tokens=False, return_tensors='pt').input_ids.to(model.device)
-
+            
             output_sequences = model.generate(
                 input_ids=input_ids,
                 max_length=request['max_tokens'] + len(input_ids[0]),
@@ -131,9 +150,7 @@ if __name__ == '__main__':
             )
 
             if args.enable_h2o_cache:
-                for name, m in model.named_modules():
-                    if isinstance(m, TAGET_MODULE['llama_h2o']):
-                        m._clean_cache()
+                reset_mask(model=model)
 
             tokens = tokenizer.convert_ids_to_tokens(output_sequences['sequences'].squeeze(0))[len(input_ids[0]):]
             logprobs = [logits.log_softmax(dim=-1).max().item() for logits in output_sequences['scores']]
@@ -166,7 +183,9 @@ if __name__ == '__main__':
             }
             
             results.append(result)
-            print('rouge-1: {:.6f}, rouge-2: {:.6f}, rouge-l: {:.6f}'.format(np.mean(rouge1_score_list), np.mean(rouge2_score_list), np.mean(rougel_score_list)))
+    
+    print(f"Model: {args.model_name}, H2O: {args.enable_h2o_cache}, Version: {args.version}, Ratio: {args.recent_ratio}/{args.heavy_ratio}")
+    print('rouge-1: {:.6f}, rouge-2: {:.6f}, rouge-l: {:.6f}'.format(np.mean(rouge1_score_list), np.mean(rouge2_score_list), np.mean(rougel_score_list)))
 
     folder_path = "/".join(output_path.split("/")[:-1])
     if not os.path.exists(folder_path):

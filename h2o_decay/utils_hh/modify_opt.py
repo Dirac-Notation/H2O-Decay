@@ -31,6 +31,7 @@ class OPTAttention_Mask(nn.Module):
         dropout: float = 0.0,
         is_decoder: bool = False,
         bias: bool = True,
+        version: int = 1
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -45,6 +46,7 @@ class OPTAttention_Mask(nn.Module):
             )
         self.scaling = self.head_dim**-0.5
         self.is_decoder = is_decoder
+        self.version = version
 
         self.k_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         self.v_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
@@ -156,9 +158,7 @@ class OPTAttention_Mask(nn.Module):
         attn_weights_devices = attn_weights.device
 
         # attn_weights (heads, q-tokens, k-tokens) -> q 방향으로 합치기
-        version = 3
-
-        if (version == 1): # default
+        if (self.version == 1): # default
             penalty = 0.00
 
             if attn_weights.shape[1] > 1:
@@ -195,7 +195,7 @@ class OPTAttention_Mask(nn.Module):
                     _, keep_topk = selected_set.topk(k=self.heavy_budget, dim=-1, largest=True)
                     attn_mask = attn_mask.scatter(-1, keep_topk, 1)
 
-        elif (version == 2): # divide
+        elif (self.version == 2): # divide
             p = 1
 
             current_scores_sum = attn_weights.sum(1) # 지금 (heads, k-tokens)
@@ -234,7 +234,7 @@ class OPTAttention_Mask(nn.Module):
                         _, keep_topk = ((selected_set**p/tmp)**(1/p)).topk(k=self.heavy_budget-1, dim=-1, largest=True)
                         attn_mask = attn_mask.scatter(-1, keep_topk, 1)
 
-        elif (version == 3): # decay
+        elif (self.version == 3): # decay
             p = 0.30
 
             if attn_weights.shape[1] > 1:
@@ -330,9 +330,7 @@ class OPTAttention_Mask(nn.Module):
 
 
 def convert_kvcache_opt_heavy_recent(model, config):
-
     for name, module in reversed(model._modules.items()):
-
         if len(list(module.children())) > 0:
             model._modules[name] = convert_kvcache_opt_heavy_recent(module, config)
 
@@ -345,6 +343,15 @@ def convert_kvcache_opt_heavy_recent(model, config):
                 dropout=config.attention_dropout,
                 is_decoder=True,
                 bias=config.enable_bias,
+                version=config.version
             )
     return model
 
+def reset_mask(model):
+    for name, module in reversed(model._modules.items()):
+        if len(list(module.children())) > 0:
+            model._modules[name] = reset_mask(module)
+
+        if isinstance(module, OPTAttention_Mask):
+            module._reset_masks()
+    return model

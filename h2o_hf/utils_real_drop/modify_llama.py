@@ -14,6 +14,8 @@ from transformers.models.llama.modeling_llama import (
     rotate_half,
     apply_rotary_pos_emb,
     LlamaRotaryEmbedding,
+    LlamaLinearScalingRotaryEmbedding,
+    LlamaDynamicNTKScalingRotaryEmbedding,
     apply_rotary_pos_emb,
     LlamaForCausalLM,
 )

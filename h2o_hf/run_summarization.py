@@ -98,7 +98,7 @@ if __name__ == '__main__':
             if line.strip() != '':
                 requests.append(json.loads(line))
 
-    print(len(requests))
+    print(f"requests length: {len(requests)}")
     if args.sample_num < len(requests):
         print('Sample {} Examples from {} samples'.format(args.sample_num, len(requests)))
     requests = requests[:args.sample_num]
