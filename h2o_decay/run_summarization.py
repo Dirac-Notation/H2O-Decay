@@ -61,7 +61,6 @@ if __name__ == '__main__':
 
     parser.add_argument("--model_arch", type=str, default='llama')
     parser.add_argument("--model_name", type=str, default='huggyllama/llama-13b')
-    parser.add_argument("--cache_dir", type=str, default='../../checkpoint/')
 
     parser.add_argument("--heavy_ratio", type=float, default=0.1)
     parser.add_argument("--recent_ratio", type=float, default=0.1)
@@ -91,13 +90,13 @@ if __name__ == '__main__':
     input_path = args.input_path
     output_path = args.output_path
 
-    config = AutoConfig.from_pretrained(model_name, cache_dir=args.cache_dir)
+    config = AutoConfig.from_pretrained(model_name)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, cache_dir=args.cache_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
     if args.batch_size>1:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=args.cache_dir)
+    model = AutoModelForCausalLM.from_pretrained(model_name)
 
     if args.enable_h2o_cache:
         print('Enabling H2O KV cache')
@@ -157,7 +156,7 @@ if __name__ == '__main__':
             top_logprobs = [{i: v for i, v in zip(tokens, logprobs)}]
 
             generate_text = tokenizer.decode(output_sequences['sequences'].squeeze(0)[len(input_ids[0]):])
-            generate_text = generate_text[: generate_text.find(stop[0])]
+            generate_text = generate_text[:generate_text.find(stop[0])]
 
             scores = rouge.get_scores(generate_text, label)[0]
             rouge1_score_list.append(scores['rouge-1']['f'])

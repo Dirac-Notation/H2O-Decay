@@ -57,7 +57,6 @@ def main():
 
     parser.add_argument("--model_arch", type=str, default='llama')
     parser.add_argument("--model_name", type=str, default='huggyllama/llama-13b')
-    parser.add_argument("--cache_dir", type=str, default='../../checkpoint/')
 
     parser.add_argument("--heavy_ratio", type=float, default=0.1)
     parser.add_argument("--recent_ratio", type=float, default=0.1)
@@ -85,14 +84,14 @@ def main():
     prompt_text = 'In a small, bustling cafe nestled in the heart of a vibrant city, a serendipitous event unfolded, leaving a lasting impression on all who witnessed it. As the patrons sat sipping their coffees and engaging in animated conversations, a talented street musician entered the cafe, carrying a weathered guitar and radiating an aura of creativity.'
 
     model_name = args.model_name
-    config = AutoConfig.from_pretrained(model_name, cache_dir=args.cache_dir)
+    config = AutoConfig.from_pretrained(model_name)
     config.heavy_ratio = args.heavy_ratio
     config.recent_ratio = args.recent_ratio
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, cache_dir=args.cache_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
 
     ######## Generate with Full Cache
-    model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=args.cache_dir)
+    model = AutoModelForCausalLM.from_pretrained(model_name)
     # model.half().eval().cuda()
 
     # input_ids = tokenizer(prompt_text, return_tensors='pt').input_ids.to(model.device)

@@ -159,16 +159,11 @@ class OPTAttention_Mask(nn.Module):
 
         # attn_weights (heads, q-tokens, k-tokens) -> q 방향으로 합치기
         if (self.version == 1): # default
-            penalty = 0.00
-
-            if attn_weights.shape[1] > 1:
-                current_scores_sum = attn_weights.sum(1) - penalty*torch.arange(attn_weights.shape[2]-1, -1, -1).to(dtype_attn_weights).to(attn_weights_devices) # (heads, k-tokens)
-            else:
-                current_scores_sum = attn_weights.sum(1) # (heads, k-tokens)
+            current_scores_sum = attn_weights.sum(1) # (heads, k-tokens)
 
             # Accumulate attention scores
             if not self.previous_scores == None:
-                current_scores_sum[:, :-1] += self.previous_scores - penalty #(Enlarge Sequence)
+                current_scores_sum[:, :-1] += self.previous_scores #(Enlarge Sequence)
             else:
                 self.heavy_budget = int(self.heavy_budget_ratio * current_scores_sum.shape[-1])
                 self.recent_budget = int(self.recent_budget_ratio * current_scores_sum.shape[-1])
@@ -192,8 +187,12 @@ class OPTAttention_Mask(nn.Module):
                     selected_set = self.previous_scores[:, :]
 
                 if not self.heavy_budget == 0:
-                    _, keep_topk = selected_set.topk(k=self.heavy_budget, dim=-1, largest=True)
-                    attn_mask = attn_mask.scatter(-1, keep_topk, 1)
+                    try:
+                        _, keep_topk = selected_set.topk(k=self.heavy_budget, dim=-1, largest=True)
+                        attn_mask = attn_mask.scatter(-1, keep_topk, 1)
+                    except:
+                        print(f"Dim-k Error - heavy_budget: {self.heavy_budget} / Sel Dim: {selected_set.shape} / Hi Dim: {hidden_states.shape}")
+                        attn_mask = torch.ones(attn_mask.shape).to(dtype_attn_weights).to(attn_weights_devices)
 
         elif (self.version == 2): # divide
             p = 1
@@ -352,6 +351,6 @@ def reset_mask(model):
         if len(list(module.children())) > 0:
             model._modules[name] = reset_mask(module)
 
-        if isinstance(module, OPTAttention_Mask):
+        if hasattr(module, "_reset_mask"):
             module._reset_masks()
     return model
