@@ -516,7 +516,8 @@ class HFLM(LM):
                 ).logits
             else:
                 assert self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM
-                return self.model(inps).logits
+                attention_mask = inps>0
+                return self.model(inps, attention_mask=attention_mask).logits
     
     def _model_test_call(self, encoded_input: torch.tensor, continuation_len: int):
         output_logits = None
@@ -524,7 +525,9 @@ class HFLM(LM):
             assert self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM
 
             for i in range(continuation_len):
-                output = self.model(encoded_input)
+                attention_mask = encoded_input>0
+
+                output = self.model(encoded_input, attention_mask=attention_mask)
 
                 output_idx = output.logits[:,-1,:].argmax(dim=-1).unsqueeze(1)
 
@@ -699,7 +702,7 @@ class HFLM(LM):
 
         chunks = utils.chunks(
             re_ord.get_reordered(),
-            2
+            32
             # n=self.batch_size
             # if self.batch_size != "auto"
             # else override_bs
@@ -743,19 +746,19 @@ class HFLM(LM):
 
                 # when too long to fit in context, truncate from the left
                 if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
-                    inp = torch.tensor(
-                        (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1],
-                        dtype=torch.long,
-                        device=self.device,
-                    )
-                    (inplen,) = inp.shape
-                    
                     # inp = torch.tensor(
-                    #     (context_enc)[-self.max_length:],
+                    #     (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1],
                     #     dtype=torch.long,
                     #     device=self.device,
                     # )
                     # (inplen,) = inp.shape
+                    
+                    inp = torch.tensor(
+                        (context_enc)[-self.max_length:],
+                        dtype=torch.long,
+                        device=self.device,
+                    )
+                    (inplen,) = inp.shape
 
                 padding_len_inp = (
                     max(padding_len_inp, inplen)
@@ -775,14 +778,14 @@ class HFLM(LM):
                     padding_len_inp, inps, padding_side="left"
                 )  # [batch, padding_len_inp]
             
-            multi_logits = F.log_softmax(
-                self._model_call(batched_inps, **call_kwargs), dim=-1
-            )  # [batch, padding_length (inp or cont), vocab]
-
-            # self.reset_mask(self.model)
             # multi_logits = F.log_softmax(
-            #     self._model_test_call(batched_inps, max(cont_len_list)), dim=-1
+            #     self._model_call(batched_inps, **call_kwargs), dim=-1
             # )  # [batch, padding_length (inp or cont), vocab]
+
+            self.reset_mask(self.model)
+            multi_logits = F.log_softmax(
+                self._model_test_call(batched_inps, max(cont_len_list)), dim=-1
+            )  # [batch, padding_length (inp or cont), vocab]
 
             for (cache_key, _, _), logits, inplen, cont_toks in zip(
                 chunk, multi_logits, inplens, cont_toks_list

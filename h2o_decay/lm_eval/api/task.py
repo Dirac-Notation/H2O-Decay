@@ -1045,7 +1045,7 @@ class ConfigurableTask(Task):
             # retrieve choices in List[str] form, to compute choice lengths, etc.
             choices = self.doc_to_choice(doc)
             completion_len = np.array([float(len(i)) for i in choices])
-
+            
             if (
                 2 * len(choices) == len(lls)
                 and "acc_mutual_info" in self._metric_fn_list.keys()
@@ -1176,7 +1176,7 @@ class ConfigurableTask(Task):
                 f"Passed invalid output_type '{self.OUTPUT_TYPE}' ! Please use one of ",
                 "'loglikelihood', 'loglikelihood_rolling', 'generate_until' or 'multiple_choice'",
             )
-
+        
         return result_dict
 
     def aggregation(self):

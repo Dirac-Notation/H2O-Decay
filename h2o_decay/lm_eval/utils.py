@@ -268,7 +268,7 @@ class Reorderer:
                 cov[ind] = True
 
         assert all(cov)
-
+        
         return res
 
 

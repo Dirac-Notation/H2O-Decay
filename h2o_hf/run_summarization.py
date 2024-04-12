@@ -15,9 +15,18 @@ from rouge import Rouge
 import logging
 import numpy as np
 
+from lost_in_the_middle.prompting import (
+    Document,
+    get_closedbook_qa_prompt,
+    get_qa_prompt,
+    get_qa_prompt_index
+)
+
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 from transformers.models.llama.configuration_llama import LlamaConfig
 from utils_real_drop.modify_llama import H2OLlamaForCausalLM, H2OLlamaAttention
+
+
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
@@ -98,7 +107,7 @@ if __name__ == '__main__':
             if line.strip() != '':
                 requests.append(json.loads(line))
 
-    print(f"requests length: {len(requests)}")
+    print(len(requests))
     if args.sample_num < len(requests):
         print('Sample {} Examples from {} samples'.format(args.sample_num, len(requests)))
     requests = requests[:args.sample_num]
