@@ -21,6 +21,7 @@ model_name = "meta-llama/Llama-2-7b-chat-hf"
 # Load the model
 lm = huggingface.HFLM(model_name)
 
+# Full Result
 results = evaluator.evaluate(lm, task)
 
 print(f"Full")
@@ -29,6 +30,7 @@ if "groups" in results:
     print(evaluator.make_table(results, "groups"))
 print("==============================================")
 
+# H2O Result
 lm.model = hh_llama(model_name, version=1, heavy_ratio=0.1, recent_ratio=0.1, penalty=1)
 # lm.model = hh_opt(model_name, version=1, heavy_ratio=0.1, recent_ratio=0.1, penalty=1)
 torch.cuda.empty_cache()
@@ -43,6 +45,7 @@ if "groups" in results:
     print(evaluator.make_table(results, "groups"))
 print("==============================================")
 
+# Penalty Result
 for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
     lm.model = hh_llama(model_name, version=2, heavy_ratio=0.2, recent_ratio=0.0, penalty=i)
     # lm.model = hh_opt(model_name, version=2, heavy_ratio=0.2, recent_ratio=0.0, penalty=i)
