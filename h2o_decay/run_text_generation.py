@@ -61,6 +61,7 @@ def main():
     parser.add_argument("--heavy_ratio", type=float, default=0.1)
     parser.add_argument("--recent_ratio", type=float, default=0.1)
     parser.add_argument("--version", type=int, default=1)
+    parser.add_argument("--penalty", type=float, default=1.0)
 
     parser.add_argument("--length", type=int, default=64)
 
@@ -89,31 +90,32 @@ def main():
     config.heavy_ratio = args.heavy_ratio
     config.recent_ratio = args.recent_ratio
     config.version = args.version
+    config.penalty = args.penalty
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
 
     ######## Generate with Full Cache
     model = AutoModelForCausalLM.from_pretrained(model_name)
     
-    model.half().eval().cuda()
-    input_ids = tokenizer(prompt_text, return_tensors='pt').input_ids.to(model.device)
-    generate_ids = model.generate(input_ids, max_new_tokens=args.length)
-    result = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    print("################## Generated Context with Full Cache ###################")
-    print(result)
-
-
-    ######### Enable HH
-    # checkpoint = copy.deepcopy(model.state_dict())
-    # model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config)
-    # model.load_state_dict(checkpoint)
     # model.half().eval().cuda()
-
     # input_ids = tokenizer(prompt_text, return_tensors='pt').input_ids.to(model.device)
-    # generate_ids_hh = model.generate(input_ids, max_new_tokens=args.length)
-    # result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    # print("################## Generated Context with Heavy Hitter Oracle ###################")
-    # print(result_hh)
+    # generate_ids = model.generate(input_ids, max_new_tokens=args.length)
+    # result = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    # print("################## Generated Context with Full Cache ###################")
+    # print(result)
+
+
+    ######## Enable HH
+    checkpoint = copy.deepcopy(model.state_dict())
+    model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config)
+    model.load_state_dict(checkpoint)
+    model.half().eval().cuda()
+
+    input_ids = tokenizer(prompt_text, return_tensors='pt').input_ids.to(model.device)
+    generate_ids_hh = model.generate(input_ids, max_new_tokens=args.length)
+    result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    print("################## Generated Context with Heavy Hitter Oracle ###################")
+    print(result_hh)
 
 
 if __name__ == "__main__":

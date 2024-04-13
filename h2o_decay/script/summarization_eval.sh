@@ -5,6 +5,7 @@ GPU="0"
 HH_SIZE=$2
 RECENT_SIZE=$3
 VERSION=$4
+PENALTY=$5
 
 if [[ ${method} == 'h2o' ]]; then
     CUDA_VISIBLE_DEVICES=${GPU} python3 -u run_summarization.py \
@@ -14,6 +15,7 @@ if [[ ${method} == 'h2o' ]]; then
         --heavy_ratio ${HH_SIZE} \
         --recent_ratio ${RECENT_SIZE} \
         --version ${VERSION} \
+        --penalty ${PENALTY} \
         --enable_h2o_cache
 elif [[ ${method} == 'full' ]]; then
     CUDA_VISIBLE_DEVICES=${GPU} python3 -u run_summarization.py \

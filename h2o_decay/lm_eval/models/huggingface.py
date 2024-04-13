@@ -554,18 +554,23 @@ class HFLM(LM):
             **generation_kwargs,
         )
 
-    def _select_cont_toks(self, logits, contlen=None, inplen=None, padlen=None):
+    def _select_cont_toks(
+        self, logits: torch.Tensor, contlen: int = None, inplen: int = None
+    ) -> torch.Tensor:
         if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
             assert (
-                contlen and inplen and padlen
+                contlen and inplen
             ), "Must pass input len and cont. len to select scored logits for causal LM"
-            
-            if logits.shape[0] == padlen:
-                # discard right-padding.
-                # also discard the input/context tokens. we'll only score continuations.
-                logits = logits[-(contlen):]
-            else:
-                logits = logits[padlen-1:padlen+contlen-1]
+            # discard right-padding.
+            # also discard the input/context tokens. we'll only score continuations.
+            logits = logits[inplen - contlen : inplen]
+        elif self.AUTO_MODEL_CLASS == transformers.AutoModelForSeq2SeqLM:
+            assert (
+                contlen and not inplen
+            ), "Selecting scored logits for Seq2SeqLM requires only cont. len"
+            # only discard right-padding.
+            # the logits input to this fn only contain decoder-side tokens.
+            logits = logits[:contlen]
 
         return logits
 
@@ -746,15 +751,8 @@ class HFLM(LM):
 
                 # when too long to fit in context, truncate from the left
                 if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
-                    # inp = torch.tensor(
-                    #     (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1],
-                    #     dtype=torch.long,
-                    #     device=self.device,
-                    # )
-                    # (inplen,) = inp.shape
-                    
                     inp = torch.tensor(
-                        (context_enc)[-self.max_length:],
+                        (context_enc + continuation_enc)[-(self.max_length + 1) :][:-1],
                         dtype=torch.long,
                         device=self.device,
                     )
@@ -775,17 +773,17 @@ class HFLM(LM):
             call_kwargs = {}
             if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
                 batched_inps = utils.pad_and_concat(
-                    padding_len_inp, inps, padding_side="left"
+                    padding_len_inp, inps, padding_side="right"
                 )  # [batch, padding_len_inp]
-            
-            # multi_logits = F.log_softmax(
-            #     self._model_call(batched_inps, **call_kwargs), dim=-1
-            # )  # [batch, padding_length (inp or cont), vocab]
 
-            self.reset_mask(self.model)
+            self.reset_mask(self.model)            
             multi_logits = F.log_softmax(
-                self._model_test_call(batched_inps, max(cont_len_list)), dim=-1
+                self._model_call(batched_inps, **call_kwargs), dim=-1
             )  # [batch, padding_length (inp or cont), vocab]
+
+            # multi_logits = F.log_softmax(
+            #     self._model_test_call(batched_inps, max(cont_len_list)), dim=-1
+            # )  # [batch, padding_length (inp or cont), vocab]
 
             for (cache_key, _, _), logits, inplen, cont_toks in zip(
                 chunk, multi_logits, inplens, cont_toks_list
@@ -801,7 +799,7 @@ class HFLM(LM):
                     if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM
                     else None
                 )
-                logits = self._select_cont_toks(logits, contlen=contlen, inplen=ctx_len, padlen=padding_len_inp)
+                logits = self._select_cont_toks(logits, contlen=contlen, inplen=ctx_len)
                 logits = logits.unsqueeze(0)  # [1, seq, vocab]
 
                 # Check if per-token argmax is exactly equal to continuation

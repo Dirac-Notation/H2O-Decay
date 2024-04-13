@@ -49,6 +49,7 @@ if __name__ == '__main__':
     parser.add_argument("--heavy_ratio", type=float, default=0.1)
     parser.add_argument("--recent_ratio", type=float, default=0.1)
     parser.add_argument("--version", type=int, default=1)
+    parser.add_argument("--penalty", type=float, default=1.0)
 
     parser.add_argument('--enable_h2o_cache', action='store_true')
 
@@ -81,7 +82,7 @@ if __name__ == '__main__':
         tokenizer.pad_token = tokenizer.eos_token
 
     if args.enable_h2o_cache:
-        model = hh_model(model_name, version=args.version, heavy_ratio=args.heavy_ratio, recent_ratio=args.recent_ratio)
+        model = hh_model(model_name, version=args.version, heavy_ratio=args.heavy_ratio, recent_ratio=args.recent_ratio, penalty=args.penalty)
     else:
         model = AutoModelForCausalLM.from_pretrained(model_name)
     
