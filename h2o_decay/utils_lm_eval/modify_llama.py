@@ -234,7 +234,7 @@ def convert_kvcache_llama_heavy_recent(model, config):
         if len(list(module.children())) > 0:
             model._modules[name] = convert_kvcache_llama_heavy_recent(module, config)
 
-        if isinstance(module, LlamaAttention):
+        if isinstance(module, LlamaAttention) or isinstance(module, LlamaAttention_heavy_hitter):
             model._modules[name] = LlamaAttention_heavy_hitter(config, model._modules[name].layer_idx)
 
     return model

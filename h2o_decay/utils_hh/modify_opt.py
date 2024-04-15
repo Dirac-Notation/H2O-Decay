@@ -169,7 +169,7 @@ class OPTAttention_Mask(nn.Module):
 
         src_len = key_states.size(1)
         attn_weights = torch.bmm(query_states, key_states.transpose(1, 2))
-
+        
         if attn_weights.size() != (bsz * self.num_heads, tgt_len, src_len):
             raise ValueError(
                 f"Attention weights should be of size {(bsz * self.num_heads, tgt_len, src_len)}, but is"
@@ -203,14 +203,14 @@ class OPTAttention_Mask(nn.Module):
             # Combine h2o+recent and apply casual mask
             mask_bottom = torch.tril(mask_bottom, diagonal=0)
             # mask_bottom = ones
-            import pdb; pdb.set_trace()
+            
             attn_weights[~mask_bottom] = torch.min(attention_mask)
 
             if attn_weights.dtype == torch.float16:
                 attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(torch.float16)
             else:
                 attn_weights = nn.functional.softmax(attn_weights, dim=-1)
-
+            
             self.attention_masks_next = torch.ones(attn_weights.shape[0], 1, attn_weights.shape[2]+1).to(attn_weights.dtype).to(attn_weights.device)
             self.attention_masks_next[:,:,:-1] = mask_bottom[:,-1,:].unsqueeze(1)
             
@@ -309,7 +309,7 @@ def convert_kvcache_opt_heavy_recent(model, config):
         if len(list(module.children())) > 0:
             model._modules[name] = convert_kvcache_opt_heavy_recent(module, config)
 
-        if isinstance(module, OPTAttention):
+        if isinstance(module, OPTAttention) or isinstance(module, OPTAttention_Mask):
             model._modules[name] = OPTAttention_Mask(
                 embed_dim=module.embed_dim,
                 num_heads=config.num_attention_heads,
