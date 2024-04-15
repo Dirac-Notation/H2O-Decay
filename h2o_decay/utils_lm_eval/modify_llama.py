@@ -60,7 +60,6 @@ def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
     
     return mask_bottom
 
-
 class LlamaAttention_heavy_hitter(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
 

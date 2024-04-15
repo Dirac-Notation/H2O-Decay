@@ -1,51 +1,39 @@
 import copy
+from typing import Union
 
 from transformers import AutoModelForCausalLM, AutoConfig
 
 from utils_lm_eval.modify_llama import convert_kvcache_llama_heavy_recent
 from utils_hh.modify_opt import convert_kvcache_opt_heavy_recent
+from lm_eval.models.huggingface import HFLM
 
-def hh_opt(model_name: str,
-             version: int = 1,
+def hh_model(model_name: str,
+             lm: HFLM=None,
              heavy_ratio: float = 0.1,
              recent_ratio: float = 0.1,
              penalty: float = 1.0
             ):
     config = AutoConfig.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
-
     config.heavy_ratio = heavy_ratio
     config.recent_ratio = recent_ratio
-    config.version = version
     config.penalty = penalty
+
+    if lm is None:
+        model = AutoModelForCausalLM.from_pretrained(model_name)
+    else:
+        model = lm.model.cpu()
 
     checkpoint = copy.deepcopy(model.state_dict())
 
-    model = convert_kvcache_opt_heavy_recent(model, config=config)
+    if (config.architectures[0] == "OPTForCausalLM"):
+        model = convert_kvcache_opt_heavy_recent(model, config=config)
+    elif (config.architectures[0] == "LlamaForCausalLM"):
+        model = convert_kvcache_llama_heavy_recent(model, config=config)
+
     model.load_state_dict(checkpoint)
 
-    return model
-
-def hh_llama(model_name: str,
-             version: int = 1,
-             heavy_ratio: float = 0.1,
-             recent_ratio: float = 0.1,
-             penalty: float = 1.0
-            ):
-    config = AutoConfig.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
-
-    config.heavy_ratio = heavy_ratio
-    config.recent_ratio = recent_ratio
-    config.version = version
-    config.penalty = penalty
-
-    checkpoint = copy.deepcopy(model.state_dict())
-
-    model = convert_kvcache_llama_heavy_recent(model, config=config)
-    model.load_state_dict(checkpoint)
-
-    return model
+    if lm is None:
+        return model
 
 def reset_mask(model):
     for name, module in reversed(model._modules.items()):

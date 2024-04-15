@@ -72,7 +72,6 @@ class OPTAttention_Mask(nn.Module):
         dropout: float = 0.0,
         is_decoder: bool = False,
         bias: bool = True,
-        version: int = 1,
         penalty = 1
     ):
         super().__init__()
@@ -102,7 +101,6 @@ class OPTAttention_Mask(nn.Module):
         self.cache_budget = None
         self.previous_scores = None
 
-        self.version = version
         self.penalty = penalty
 
     def _reset_masks(self):
@@ -205,7 +203,7 @@ class OPTAttention_Mask(nn.Module):
             # Combine h2o+recent and apply casual mask
             mask_bottom = torch.tril(mask_bottom, diagonal=0)
             # mask_bottom = ones
-            
+            import pdb; pdb.set_trace()
             attn_weights[~mask_bottom] = torch.min(attention_mask)
 
             if attn_weights.dtype == torch.float16:
@@ -228,24 +226,14 @@ class OPTAttention_Mask(nn.Module):
 
             # attn_weights (heads, q-tokens, k-tokens) -> q 방향으로 합치기
             # Scoring
-            if (self.version == 1): # default
-                current_scores_sum = attn_weights.sum(1) # (heads, k-tokens)
+            if attn_weights.shape[1] > 1:
+                penalty = torch.arange(attn_weights.shape[1],0,-1).unsqueeze(1).to(attn_weights.dtype).to(attn_weights.device) - 1
+                penalty = self.penalty**penalty
+                current_scores_sum = attn_weights*penalty
+                current_scores_sum = current_scores_sum.sum(1)
 
-                # Accumulate attention scores
-                if not self.previous_scores == None:
-                    current_scores_sum[:, :-1] += self.previous_scores #(Enlarge Sequence)
-
-            elif (self.version == 2): # decay
-                if attn_weights.shape[1] > 1:
-                    penalty = torch.arange(attn_weights.shape[1],0,-1).unsqueeze(1).to(attn_weights.dtype).to(attn_weights.device) - 1
-                    penalty = self.penalty**penalty
-                    current_scores_sum = attn_weights*penalty
-                    current_scores_sum = current_scores_sum.sum(1)
-                else:
-                    current_scores_sum = attn_weights.sum(1) # (heads, k-tokens)
-
-                if not self.previous_scores == None:
-                    current_scores_sum[:, :-1] += self.penalty*self.previous_scores #(Enlarge Sequence)
+            if not self.previous_scores == None:
+                current_scores_sum[:, :-1] += self.penalty*self.previous_scores #(Enlarge Sequence)
 
             self.previous_scores = current_scores_sum #(heads, k-tokens)
             attn_mask = torch.zeros(current_scores_sum.shape[0], current_scores_sum.shape[1]+1).to(attn_weights.dtype).to(attn_weights.device)
@@ -330,7 +318,6 @@ def convert_kvcache_opt_heavy_recent(model, config):
                 dropout=config.attention_dropout,
                 is_decoder=True,
                 bias=config.enable_bias,
-                version=config.version,
                 penalty=config.penalty
             )
     return model
