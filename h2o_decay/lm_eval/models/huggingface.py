@@ -518,23 +518,6 @@ class HFLM(LM):
                 assert self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM
                 attention_mask = inps>0
                 return self.model(inps, attention_mask=attention_mask).logits
-    
-    def _model_test_call(self, encoded_input: torch.tensor, continuation_len: int):
-        output_logits = None
-        with torch.no_grad():
-            assert self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM
-
-            for i in range(continuation_len):
-                attention_mask = encoded_input>0
-
-                output = self.model(encoded_input, attention_mask=attention_mask)
-
-                output_idx = output.logits[:,-1,:].argmax(dim=-1).unsqueeze(1)
-
-                encoded_input = torch.cat((encoded_input, output_idx), dim=-1)
-
-        return output.logits
-
 
     def _model_generate(self, context, max_length, stop, **generation_kwargs):
         # we require users to pass do_sample=True explicitly
@@ -707,7 +690,7 @@ class HFLM(LM):
 
         chunks = utils.chunks(
             re_ord.get_reordered(),
-            32
+            n = 32
             # n=self.batch_size
             # if self.batch_size != "auto"
             # else override_bs
@@ -735,7 +718,7 @@ class HFLM(LM):
             # because vectorizing is annoying, we first convert each (context, continuation) pair to padded
             # tensors, then we pack them together into a batch, call the model, and then pick it all apart
             # again because vectorizing is annoying
-
+            
             for _, context_enc, continuation_enc in chunk:
                 # sanity check
                 assert len(context_enc) > 0
@@ -780,10 +763,6 @@ class HFLM(LM):
             multi_logits = F.log_softmax(
                 self._model_call(batched_inps, **call_kwargs), dim=-1
             )  # [batch, padding_length (inp or cont), vocab]
-
-            # multi_logits = F.log_softmax(
-            #     self._model_test_call(batched_inps, max(cont_len_list)), dim=-1
-            # )  # [batch, padding_length (inp or cont), vocab]
 
             for (cache_key, _, _), logits, inplen, cont_toks in zip(
                 chunk, multi_logits, inplens, cont_toks_list

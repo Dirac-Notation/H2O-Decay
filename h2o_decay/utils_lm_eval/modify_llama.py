@@ -41,13 +41,8 @@ def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
 
     for token_index in range(heavy_budget, seq_length):
         attn_row = attn_weights[:,:,token_index,:]
-        previous_mask = mask_bottom[:,:, token_index-1, :]
-        attn_row = attn_row * previous_mask + ~previous_mask * torch.finfo(attn_weights.dtype).min
 
         tmp_attn_index = nn.functional.softmax(attn_row, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
-
-        accumulated_attention_score *= penalty
-        accumulated_attention_score += tmp_attn_index
 
         _, tmp_topk_index = accumulated_attention_score.topk(k=heavy_budget-1, dim=-1)
 
@@ -56,6 +51,8 @@ def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
         mask_bottom_index[:,:, token_index] = True
 
         mask_bottom[:,:,token_index,:] = mask_bottom_index
+        accumulated_attention_score *= penalty
+        accumulated_attention_score += tmp_attn_index
         accumulated_attention_score = accumulated_attention_score * mask_bottom_index
     
     return mask_bottom
@@ -203,7 +200,7 @@ class LlamaAttention_heavy_hitter(nn.Module):
         # upcast attention to fp32
         attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
         attn_output = torch.matmul(attn_weights, value_states)
-
+        
         if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
             raise ValueError(
                 f"`attn_output` should be of size {(bsz, self.num_heads, q_len, self.head_dim)}, but is"

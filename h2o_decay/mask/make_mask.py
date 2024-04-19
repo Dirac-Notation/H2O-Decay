@@ -8,25 +8,25 @@ import matplotlib.pyplot as plt
 
 # tensor_list = [local, h2o, penalty8, penalty2]
 
-# plt.figure(figsize=(4*len(tensor_list), 4))
+tensor_list = [torch.load("test.pt")]
 
-tensor_list = [torch.load("weights.pt").cpu().detach()]
+plt.figure(figsize=(4*len(tensor_list), 4))
 
 for ln in range(32):
     for i,j in enumerate(tensor_list):
-        tmp = j[ln].to(torch.float32)[:60,:60]
+        tmp = j[ln].to(torch.float32)
 
-        # tmp *= -0.5
-        # tmp += 0.5
+        tmp *= -0.5
+        tmp += 0.5
 
-        # ones = torch.ones_like(tmp)
-        # ones = torch.triu(ones, diagonal=1)
+        ones = torch.ones_like(tmp)
+        ones = torch.triu(ones, diagonal=1)
 
-        # tmp += ones*tmp
+        tmp += ones*tmp
 
         plt.subplot(1, len(tensor_list), i+1)
         plt.xticks([])
         plt.yticks([])
-        plt.imshow(1-tmp, cmap="gray")
+        plt.imshow(tmp, cmap="gray")
         
     plt.savefig(f"scores/test_{ln}.png")

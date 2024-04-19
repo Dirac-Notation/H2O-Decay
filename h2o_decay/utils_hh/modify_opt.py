@@ -39,21 +39,17 @@ def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
 
     for token_index in range(heavy_budget, seq_length):
         attn_row = attn_weights[:,token_index,:]
-        previous_mask = mask_bottom[:, token_index-1, :]
-        attn_row = attn_row * previous_mask + ~previous_mask * torch.finfo(attn_weights.dtype).min
 
         tmp_attn_index = nn.functional.softmax(attn_row, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
 
-        accumulated_attention_score *= penalty
-        accumulated_attention_score += tmp_attn_index
-
         _, tmp_topk_index = accumulated_attention_score.topk(k=heavy_budget-1, dim=-1)
-
         zeros_index = torch.zeros_like(tmp_attn_index, dtype=torch.bool)
         mask_bottom_index = zeros_index.scatter(-1, tmp_topk_index, True) #(head, keys)
         mask_bottom_index[:, token_index] = True
 
         mask_bottom[:,token_index,:] = mask_bottom_index
+        accumulated_attention_score *= penalty
+        accumulated_attention_score += tmp_attn_index
         accumulated_attention_score = accumulated_attention_score * mask_bottom_index
 
     mask_bottom = torch.tril(mask_bottom, diagonal=0)
@@ -203,7 +199,7 @@ class OPTAttention_Mask(nn.Module):
             # Combine h2o+recent and apply casual mask
             mask_bottom = torch.tril(mask_bottom, diagonal=0)
             # mask_bottom = ones
-            
+
             attn_weights[~mask_bottom] = torch.min(attention_mask)
 
             if attn_weights.dtype == torch.float16:
@@ -213,7 +209,7 @@ class OPTAttention_Mask(nn.Module):
             
             self.attention_masks_next = torch.ones(attn_weights.shape[0], 1, attn_weights.shape[2]+1).to(attn_weights.dtype).to(attn_weights.device)
             self.attention_masks_next[:,:,:-1] = mask_bottom[:,-1,:].unsqueeze(1)
-            
+            torch.save(mask_bottom.cpu().detach(), "pt/0.pt"); exit()
         else:
             if self.attention_masks_next is not None:
                 attn_weights = attn_weights * self.attention_masks_next + (1 - self.attention_masks_next) * torch.finfo(attn_weights.dtype).min
