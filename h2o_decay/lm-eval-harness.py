@@ -19,31 +19,34 @@ def lm_test(lm_model: huggingface.HFLM, task_dict: dict):
 # load task dataset
 initialize_tasks()
 # task_list = ["openbookqa", "winogrande", "arc_easy", "arc_challenge", "piqa"]
-task_list = ["arc_challenge"]
+# task_list = ["winogrande", "arc_easy", "arc_challenge", "piqa"]
+task_list = ["mathqa"]
 task = tasks.get_task_dict(task_list)
 
 # model_name = "gpt2"
-# model_name = "meta-llama/Llama-2-7b-chat-hf"
-model_name = "facebook/opt-2.7b"
+model_name = "meta-llama/Llama-2-7b-hf"
+# model_name = "facebook/opt-2.7b"
 
 ratio = 0.4
 
 # Load the model
 lm = huggingface.HFLM(model_name)
 
-# # Full Result
-# print("Full")
-# lm_test(lm, task)
+# Full Result
+print("Full")
+lm_test(lm, task)
 
-# # Local Result
-# hh_model(model_name=model_name, lm=lm, heavy_ratio=0.0, recent_ratio=ratio, penalty=1.0)
-# torch.cuda.empty_cache()
-# lm.model.eval().half().cuda()
-# print("Local")
-# lm_test(lm, task)
+print(f"================={ratio}=================")
+
+# Local Result
+hh_model(model_name=model_name, lm=lm, heavy_ratio=0.0, recent_ratio=ratio, penalty=1.0)
+torch.cuda.empty_cache()
+lm.model.eval().half().cuda()
+print("Local")
+lm_test(lm, task)
 
 # # H2O Result
-# hh_model(model_name=model_name, lm=lm, heavy_ratio=ratio/2, recent_ratio=ratio/2, penalty=1.0)
+# hh_model(model_name=model_name, lm=lm, heavy_ratio=0.1, recent_ratio=0.3, penalty=1.0)
 # torch.cuda.empty_cache()
 # lm.model.eval().half().cuda()
 # print("H2O")
@@ -57,7 +60,7 @@ lm = huggingface.HFLM(model_name)
 #     print(i)
 #     lm_test(lm, task)
 
-hh_model(model_name=model_name, lm=lm, heavy_ratio=0.4, recent_ratio=0.0, penalty=0.0)
-torch.cuda.empty_cache()
-lm.model.eval().half().cuda()
-lm_test(lm, task)
+# hh_model(model_name=model_name, lm=lm, heavy_ratio=0.4, recent_ratio=0.0, penalty=0.0)
+# torch.cuda.empty_cache()
+# lm.model.eval().half().cuda()
+# lm_test(lm, task)

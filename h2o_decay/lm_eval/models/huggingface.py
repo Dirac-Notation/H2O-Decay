@@ -235,7 +235,7 @@ class HFLM(LM):
 
         # forever after, access self._model through self.model property
         self.model.eval()
-        # self.model.tie_weights()
+        self.model.tie_weights()
         if gpus <= 1 and not parallelize:
             # place model onto device, if not using HF Accelerate in any form
             try:
@@ -338,14 +338,6 @@ class HFLM(LM):
     @model.setter
     def model(self, value):
         self._model = value
-
-    def reset_mask(self, model):
-        for name, module in reversed(model._modules.items()):
-            if len(list(module.children())) > 0:
-                model._modules[name] = self.reset_mask(module)
-            if hasattr(module, "_reset_masks"):
-                module._reset_masks()
-        return model
 
     @property
     def eot_token_id(self):
@@ -690,7 +682,7 @@ class HFLM(LM):
 
         chunks = utils.chunks(
             re_ord.get_reordered(),
-            n = 32
+            n = 16
             # n=self.batch_size
             # if self.batch_size != "auto"
             # else override_bs
@@ -758,8 +750,7 @@ class HFLM(LM):
                 batched_inps = utils.pad_and_concat(
                     padding_len_inp, inps, padding_side="right"
                 )  # [batch, padding_len_inp]
-
-            self.reset_mask(self.model)            
+            
             multi_logits = F.log_softmax(
                 self._model_call(batched_inps, **call_kwargs), dim=-1
             )  # [batch, padding_length (inp or cont), vocab]

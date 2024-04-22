@@ -209,7 +209,7 @@ class OPTAttention_Mask(nn.Module):
             
             self.attention_masks_next = torch.ones(attn_weights.shape[0], 1, attn_weights.shape[2]+1).to(attn_weights.dtype).to(attn_weights.device)
             self.attention_masks_next[:,:,:-1] = mask_bottom[:,-1,:].unsqueeze(1)
-            torch.save(mask_bottom.cpu().detach(), "pt/0.pt"); exit()
+            # torch.save(mask_bottom.cpu().detach(), "pt/0.pt"); exit()
         else:
             if self.attention_masks_next is not None:
                 attn_weights = attn_weights * self.attention_masks_next + (1 - self.attention_masks_next) * torch.finfo(attn_weights.dtype).min
