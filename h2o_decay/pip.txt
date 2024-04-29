@@ -1,0 +1,14 @@
+numpy
+pandas
+matplotlib
+scikit-learn
+scipy
+torch
+transformers
+evaluate
+sacrebleu
+sqlitedict
+pysqlite3
+wheel
+peft
+urllib3<2.0.0
