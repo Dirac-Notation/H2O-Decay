@@ -689,17 +689,16 @@ class HFLM(LM):
 
         chunks = utils.chunks(
             re_ord.get_reordered(),
-            n = 16
-            # n=self.batch_size
-            # if self.batch_size != "auto"
-            # else override_bs
-            # if override_bs is not None
-            # else 0,
-            # fn=self._batch_scheduler
-            # if self.batch_size == "auto"
-            # and n_reordered_requests > 0
-            # and not override_bs
-            # else None,
+            n=self.batch_size
+            if self.batch_size != "auto"
+            else override_bs
+            if override_bs is not None
+            else 0,
+            fn=self._batch_scheduler
+            if self.batch_size == "auto"
+            and n_reordered_requests > 0
+            and not override_bs
+            else None,
         )
 
         pbar = tqdm(total=len(requests), disable=(disable_tqdm or (self.rank != 0)))
