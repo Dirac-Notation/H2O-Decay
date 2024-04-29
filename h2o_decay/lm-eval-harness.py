@@ -19,8 +19,7 @@ def lm_test(lm_model: huggingface.HFLM, task_dict: dict):
 # load task dataset
 initialize_tasks()
 # task_list = ["openbookqa", "winogrande", "arc_easy", "arc_challenge", "piqa"]
-# task_list = ["winogrande", "arc_easy", "arc_challenge", "piqa"]
-task_list = ["mathqa"]
+task_list = ["winogrande"]
 task = tasks.get_task_dict(task_list)
 
 # model_name = "gpt2"
@@ -32,9 +31,9 @@ ratio = 0.4
 # Load the model
 lm = huggingface.HFLM(model_name)
 
-# Full Result
-print("Full")
-lm_test(lm, task)
+# # Full Result
+# print("Full")
+# lm_test(lm, task)
 
 print(f"================={ratio}=================")
 

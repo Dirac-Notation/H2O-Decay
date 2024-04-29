@@ -654,6 +654,13 @@ class HFLM(LM):
         print(f"Determined largest batch size: {self.batch_sizes[sched]}")
         return self.batch_sizes[sched]
 
+    def reset_mask(self, model):
+        for _, module in reversed(model._modules.items()):
+            if len(list(module.children())) > 0:
+                self.reset_mask(module)
+            if hasattr(module, "_reset_masks"):
+                module._reset_masks()
+
     def _loglikelihood_tokens(
         self,
         requests: List[Tuple[Tuple[str, str], List[int], List[int]]],
@@ -750,6 +757,8 @@ class HFLM(LM):
                 batched_inps = utils.pad_and_concat(
                     padding_len_inp, inps, padding_side="right"
                 )  # [batch, padding_len_inp]
+            
+            self.reset_mask(self.model)
             
             multi_logits = F.log_softmax(
                 self._model_call(batched_inps, **call_kwargs), dim=-1

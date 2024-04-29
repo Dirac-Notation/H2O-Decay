@@ -11,4 +11,5 @@ sqlitedict
 pysqlite3
 wheel
 peft
+pytablewriter
 urllib3<2.0.0

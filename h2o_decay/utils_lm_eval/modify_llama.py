@@ -95,6 +95,13 @@ class LlamaAttention_heavy_hitter(nn.Module):
         self.recent_budget_ratio = config.recent_ratio
         self.penalty = config.penalty
 
+    def _reset_masks(self):
+        self.attention_masks_next = None 
+        self.heavy_budget = None
+        self.recent_budget = None
+        self.cache_budget = None
+        self.previous_scores = None
+
     def _init_rope(self):
         if self.config.rope_scaling is None:
             self.rotary_emb = LlamaRotaryEmbedding(
