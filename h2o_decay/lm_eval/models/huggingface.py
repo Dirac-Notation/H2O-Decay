@@ -757,8 +757,6 @@ class HFLM(LM):
                     padding_len_inp, inps, padding_side="right"
                 )  # [batch, padding_len_inp]
             
-            self.reset_mask(self.model)
-            
             multi_logits = F.log_softmax(
                 self._model_call(batched_inps, **call_kwargs), dim=-1
             )  # [batch, padding_length (inp or cont), vocab]
