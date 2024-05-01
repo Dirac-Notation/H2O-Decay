@@ -31,18 +31,21 @@ ratio = 0.4
 # Load the model
 lm = huggingface.HFLM(model_name, batch_size="auto")
 
-# Full Result
-print("Full")
-lm_test(lm, task)
-
-# print(f"================={ratio}=================")
-
-# # Local Result
-# hh_model(model_name=model_name, lm=lm, heavy_ratio=0.0, recent_ratio=ratio, penalty=1.0)
-# torch.cuda.empty_cache()
-# lm.model.eval().half().cuda()
-# print("Local")
+# # Full Result
+# print("Full")
 # lm_test(lm, task)
+
+print(f"================={ratio}=================")
+
+# Local Result
+for i in range(1, 40):
+    tmp = i/100
+    print(f"{tmp}:{ratio-tmp}")
+    hh_model(model_name=model_name, lm=lm, heavy_ratio=tmp, recent_ratio=ratio-tmp, penalty=1.0)
+    torch.cuda.empty_cache()
+    lm.model.eval().half().cuda()
+    print("Local")
+    lm_test(lm, task)
 
 # # H2O Result
 # hh_model(model_name=model_name, lm=lm, heavy_ratio=0.1, recent_ratio=0.3, penalty=1.0)

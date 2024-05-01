@@ -508,6 +508,7 @@ class HFLM(LM):
                 ).logits
             else:
                 assert self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM
+                self.reset_mask(self.model)
                 attention_mask = inps>0
                 return self.model(inps, attention_mask=attention_mask).logits
 
@@ -655,11 +656,12 @@ class HFLM(LM):
         return self.batch_sizes[sched]
 
     def reset_mask(self, model):
-        for _, module in reversed(model._modules.items()):
+        for name, module in reversed(model._modules.items()):
             if len(list(module.children())) > 0:
-                self.reset_mask(module)
+                model._modules[name] = self.reset_mask(module)
             if hasattr(module, "_reset_masks"):
                 module._reset_masks()
+        return model
 
     def _loglikelihood_tokens(
         self,
@@ -756,8 +758,6 @@ class HFLM(LM):
                 batched_inps = utils.pad_and_concat(
                     padding_len_inp, inps, padding_side="right"
                 )  # [batch, padding_len_inp]
-            
-            self.reset_mask(self.model)
             
             multi_logits = F.log_softmax(
                 self._model_call(batched_inps, **call_kwargs), dim=-1
