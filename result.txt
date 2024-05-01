@@ -1,0 +1,9 @@
+Full
+Passed argument batch_size = auto:1. Detecting largest batch size
+Determined largest batch size: 64
+|  Tasks   |Version|Filter|n-shot|Metric|Value |   |Stderr|
+|----------|-------|------|-----:|------|-----:|---|-----:|
+|winogrande|Yaml   |none  |     0|acc   |0.6906|±  | 0.013|
+
+==============================================
+Local
