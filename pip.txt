@@ -4,7 +4,7 @@ matplotlib
 scikit-learn
 scipy
 torch
-transformers<4.39.0
+transformers<4.36.0
 evaluate
 sacrebleu
 sqlitedict
@@ -13,5 +13,5 @@ wheel
 peft
 pytablewriter
 ftfy
-lm-eval<0.4.0
+lm-eval==0.4.0
 urllib3<2.0.0

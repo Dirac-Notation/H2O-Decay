@@ -1,4 +1,6 @@
 import copy
+import torch
+
 from typing import Union
 
 from transformers import AutoModelForCausalLM, AutoConfig
@@ -22,6 +24,8 @@ def hh_model(model_name: str,
         model = AutoModelForCausalLM.from_pretrained(model_name)
     else:
         model = lm.model.cpu()
+    
+    torch.cuda.empty_cache()
 
     checkpoint = copy.deepcopy(model.state_dict())
 
