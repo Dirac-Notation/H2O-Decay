@@ -106,7 +106,6 @@ if __name__ == '__main__':
                     if args.debug:
                         print(target)
                     for i, mask in enumerate(eval_mask):
-                        import pdb; pdb.set_trace()
                         try:
                             
                             if i+1 >= len(tokens):
