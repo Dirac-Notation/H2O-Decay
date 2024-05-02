@@ -19,13 +19,13 @@ def lm_test(lm_model: huggingface.HFLM, task_dict: dict):
 # load task dataset
 initialize_tasks()
 # task_list = ["openbookqa", "winogrande", "arc_easy", "arc_challenge", "piqa"]
-task_list = ["openbookqa"]
+task_list = ["winogrande"]
 task = tasks.get_task_dict(task_list)
 
 # model_name = "gpt2"
 # model_name = "meta-llama/Llama-2-7b-hf"
-model_name = "huggyllama/llama-7b"
-# model_name = "facebook/opt-2.7b"
+# model_name = "huggyllama/llama-7b"
+model_name = "facebook/opt-2.7b"
 
 ratio = 0.4
 

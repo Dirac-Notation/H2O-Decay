@@ -1,7 +1,7 @@
 # ## Obtain inference data
 task=$1
 shots=0
-python -u generate_task_data.py --output-file ${task}-${shots}.jsonl --task-name ${task} --num-fewshot ${shots}
+# python -u generate_task_data.py --output-file ${task}-${shots}.jsonl --task-name ${task} --num-fewshot ${shots}
 
 ## Inference, and generate output json file
 model=$2

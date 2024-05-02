@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     config = AutoConfig.from_pretrained(model_name, cache_dir=args.cache_dir)
     tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=args.cache_dir)
-    model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=args.cache_dir)
+    model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=args.cache_dir, device_map="auto")
 
     if args.enable_small_cache:
         print('Enable Small Cache Size')
@@ -53,7 +53,8 @@ if __name__ == '__main__':
         model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_type](model, config)
         model.load_state_dict(checkpoint)
 
-    model.half().eval().cuda()
+    # model.half().eval().cuda()
+    model.half().eval()
 
     requests = []
     with open(input_path, 'r') as f:

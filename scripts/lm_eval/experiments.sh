@@ -1,3 +1,5 @@
+# bash scripts/lm_eval/full_cache.sh winogrande facebook/opt-2.7b opt
+
 # ## OPT-30B
 # bash scripts/lm_eval/full_cache.sh openbookqa facebook/opt-30b opt
 # bash scripts/lm_eval/h2o.sh openbookqa facebook/opt-30b opt
@@ -8,8 +10,8 @@
 # bash scripts/lm_eval/local.sh copa facebook/opt-30b opt
 
 ## LLaMA-7B
-# bash scripts/lm_eval/full_cache.sh piqa huggyllama/llama-7b llama
-bash scripts/lm_eval/h2o.sh winogrande huggyllama/llama-7b llama
+bash scripts/lm_eval/full_cache.sh winogrande huggyllama/llama-7b llama
+# bash scripts/lm_eval/h2o.sh winogrande huggyllama/llama-7b llama
 # bash scripts/lm_eval/local.sh openbookqa huggyllama/llama-7b llama
 
 # bash scripts/lm_eval/full_cache.sh copa huggyllama/llama-7b llama

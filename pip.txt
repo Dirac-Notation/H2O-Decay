@@ -4,7 +4,7 @@ matplotlib
 scikit-learn
 scipy
 torch
-transformers<4.30.0
+transformers<4.39.0
 evaluate
 sacrebleu
 sqlitedict
