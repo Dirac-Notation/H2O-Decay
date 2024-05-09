@@ -2,4 +2,4 @@
 *.pyc
 *.csv
 lm
-results
+data
