@@ -1,2 +1,5 @@
 *.pt
 *.pyc
+*.csv
+lm
+results

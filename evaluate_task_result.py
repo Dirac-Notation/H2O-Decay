@@ -106,6 +106,7 @@ if __name__ == '__main__':
                     if args.debug:
                         print(target)
                     for i, mask in enumerate(eval_mask):
+                        
                         try:
                             
                             if i+1 >= len(tokens):
@@ -135,7 +136,6 @@ if __name__ == '__main__':
                 'mask_loss': mask_loss,
                 'each_correct': each_correct,
             }
-            
             
             return out
 

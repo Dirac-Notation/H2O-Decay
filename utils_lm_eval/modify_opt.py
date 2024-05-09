@@ -20,37 +20,35 @@ __all__ = ['convert_kvcache_opt_heavy_recent', 'OPTAttention_Mask']
 
 
 
-def local_heavy_hitter_mask(attn_weights, heavy_budget, no_padding_seq_length=None):
+def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
 
     # attn_weights (head, query, keys)
     dtype_attn_weights = attn_weights.dtype
     seq_length = attn_weights.shape[-1]
-    if no_padding_seq_length is None:
-        padding_length = 0
-    else:
-        padding_length = seq_length - no_padding_seq_length
 
-    offset = torch.finfo(attn_weights.dtype).min
     tmp_attn = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
 
-    accumulated_attention_score = torch.sum(tmp_attn[:,padding_length:heavy_budget+padding_length,:], dim=-2) #(head, keys)
-    accumulated_attention_score[:,heavy_budget+padding_length:] = 0
+    penalty_factor = torch.arange(heavy_budget,0,-1).unsqueeze(1).to(dtype_attn_weights).to(attn_weights.device) - 1
+    penalty_factor = penalty**penalty_factor
 
-    if padding_length > 0:
-        accumulated_attention_score[:,:padding_length] = 0
+    penaltied_attn = tmp_attn[:,:heavy_budget,:] * penalty_factor
+    accumulated_attention_score = torch.sum(penaltied_attn, dim=-2) #(head, keys)
+    accumulated_attention_score[:,heavy_budget:] = 0
 
     mask_bottom = torch.zeros_like(attn_weights, dtype=torch.bool)
-    mask_bottom[:, padding_length:heavy_budget+padding_length, padding_length:heavy_budget+padding_length] = True
+    mask_bottom[:, :heavy_budget, :heavy_budget] = True
 
-    for token_index in range(heavy_budget+padding_length, seq_length):
-
-        tmp_attn_index = nn.functional.softmax(attn_weights[:,token_index,:], dim=-1, dtype=torch.float32).to(dtype_attn_weights)
+    for token_index in range(heavy_budget, seq_length):
+        tmp_attn_index = tmp_attn[:,token_index,:]
+        
         _, tmp_topk_index = accumulated_attention_score.topk(k=heavy_budget-1, dim=-1)
+        
         zeros_index = torch.zeros_like(tmp_attn_index, dtype=torch.bool)
         mask_bottom_index = zeros_index.scatter(-1, tmp_topk_index, True) #(head, keys)
         mask_bottom_index[:, token_index] = True
 
         mask_bottom[:,token_index,:] = mask_bottom_index
+        accumulated_attention_score *= penalty
         accumulated_attention_score += tmp_attn_index
         accumulated_attention_score = accumulated_attention_score * mask_bottom_index
 
@@ -86,6 +84,7 @@ class OPTAttention_Mask(nn.Module):
         dropout: float = 0.0,
         is_decoder: bool = False,
         bias: bool = True,
+        penalty: float = 1.0,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -108,6 +107,7 @@ class OPTAttention_Mask(nn.Module):
 
         self.heavy_budget_ratio = heavy_ratio
         self.recent_budget_ratio = recent_ratio
+        self.penalty = penalty
 
     def _shape(self, tensor: torch.Tensor, seq_len: int, bsz: int):
         return tensor.view(bsz, seq_len, self.num_heads, self.head_dim).transpose(1, 2).contiguous()
@@ -190,7 +190,7 @@ class OPTAttention_Mask(nn.Module):
 
         # Heavy Hitter Mask
         if heavy_budget > 0:
-            mask_bottom = local_heavy_hitter_mask(attn_weights, heavy_budget, None) # Default: No padding applied to input
+            mask_bottom = local_heavy_hitter_mask(attn_weights, heavy_budget, self.penalty) # Default: No padding applied to input
         else:
             mask_bottom = torch.zeros_like(attn_weights, dtype=torch.bool)
 
@@ -268,6 +268,6 @@ def convert_kvcache_opt_heavy_recent(model, config):
                 dropout=config.attention_dropout,
                 is_decoder=True,
                 bias=config.enable_bias,
+                penalty=config.penalty
             )
     return model
-

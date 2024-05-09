@@ -1,30 +1,14 @@
-# bash scripts/lm_eval/full_cache.sh winogrande facebook/opt-2.7b opt
-
-# ## OPT-30B
-# bash scripts/lm_eval/full_cache.sh openbookqa facebook/opt-30b opt
-# bash scripts/lm_eval/h2o.sh openbookqa facebook/opt-30b opt
-# bash scripts/lm_eval/local.sh openbookqa facebook/opt-30b opt
-
-# bash scripts/lm_eval/full_cache.sh copa facebook/opt-30b opt
-# bash scripts/lm_eval/h2o.sh copa facebook/opt-30b opt
-# bash scripts/lm_eval/local.sh copa facebook/opt-30b opt
-
 ## LLaMA-7B
-bash scripts/lm_eval/full_cache.sh winogrande huggyllama/llama-7b llama
-# bash scripts/lm_eval/h2o.sh winogrande huggyllama/llama-7b llama
-# bash scripts/lm_eval/local.sh openbookqa huggyllama/llama-7b llama
+for dataset in piqa copa openbookqa winogrande mathqa
+do
+  bash scripts/lm_eval/prepare_data.sh $dataset 0
 
-# bash scripts/lm_eval/full_cache.sh copa huggyllama/llama-7b llama
-# bash scripts/lm_eval/h2o.sh copa huggyllama/llama-7b llama
-# bash scripts/lm_eval/local.sh copa huggyllama/llama-7b llama
+  bash scripts/lm_eval/full_cache.sh $dataset huggyllama/llama-7b llama 0
+  bash scripts/lm_eval/h2o.sh $dataset huggyllama/llama-7b llama 0
+  bash scripts/lm_eval/local.sh $dataset huggyllama/llama-7b llama 0
 
-
-# ## GPT-Neox-20b
-# bash scripts/lm_eval/full_cache.sh openbookqa EleutherAI/gpt-neox-20b gpt_neox
-# bash scripts/lm_eval/h2o.sh openbookqa EleutherAI/gpt-neox-20b gpt_neox
-# bash scripts/lm_eval/local.sh openbookqa EleutherAI/gpt-neox-20b gpt_neox
-
-# bash scripts/lm_eval/full_cache.sh copa EleutherAI/gpt-neox-20b gpt_neox
-# bash scripts/lm_eval/h2o.sh copa EleutherAI/gpt-neox-20b gpt_neox
-# bash scripts/lm_eval/local.sh copa EleutherAI/gpt-neox-20b gpt_neox
-
+    for method in full h2o_basic h2o_decay local
+    do
+        bash script/lm_eval/evaluate.sh winogrande huggyllama/llama-7b llama 0 $method
+    done
+done

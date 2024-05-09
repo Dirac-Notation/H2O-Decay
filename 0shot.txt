@@ -1,0 +1,207 @@
+Full
+Passed argument batch_size = auto:1. Detecting largest batch size
+Determined largest batch size: 32
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.3420|±  |0.0212|
+|winogrande|Yaml   |none  |     0|acc     |0.7001|±  |0.0129|
+|piqa      |Yaml   |none  |     0|acc     |0.7867|±  |0.0096|
+|copa      |Yaml   |none  |     0|acc     |0.8500|±  |0.0359|
+
+==============================================
+=================0.1=================
+Local
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1340|±  |0.0152|
+|winogrande|Yaml   |none  |     0|acc     |0.4941|±  |0.0141|
+|piqa      |Yaml   |none  |     0|acc     |0.5277|±  |0.0116|
+|copa      |Yaml   |none  |     0|acc     |0.6400|±  |0.0482|
+
+==============================================
+H2O
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1440|±  |0.0157|
+|winogrande|Yaml   |none  |     0|acc     |0.5012|±  |0.0141|
+|piqa      |Yaml   |none  |     0|acc     |0.6034|±  |0.0114|
+|copa      |Yaml   |none  |     0|acc     |0.6500|±  |0.0479|
+
+==============================================
+h2o-decay
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1420|±  |0.0156|
+|winogrande|Yaml   |none  |     0|acc     |0.5012|±  |0.0141|
+|piqa      |Yaml   |none  |     0|acc     |0.6202|±  |0.0113|
+|copa      |Yaml   |none  |     0|acc     |0.6200|±  |0.0488|
+
+==============================================
+=================0.2=================
+Local
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1420|±  |0.0156|
+|winogrande|Yaml   |none  |     0|acc     |0.4870|±  |0.0140|
+|piqa      |Yaml   |none  |     0|acc     |0.5479|±  |0.0116|
+|copa      |Yaml   |none  |     0|acc     |0.5900|±  |0.0494|
+
+==============================================
+H2O
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1620|±  |0.0165|
+|winogrande|Yaml   |none  |     0|acc     |0.5075|±  |0.0141|
+|piqa      |Yaml   |none  |     0|acc     |0.6708|±  |0.0110|
+|copa      |Yaml   |none  |     0|acc     |0.6100|±  |0.0490|
+
+==============================================
+h2o-decay
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1980|±  |0.0178|
+|winogrande|Yaml   |none  |     0|acc     |0.5296|±  |0.0140|
+|piqa      |Yaml   |none  |     0|acc     |0.7258|±  |0.0104|
+|copa      |Yaml   |none  |     0|acc     |0.6700|±  |0.0473|
+
+==============================================
+=================0.3=================
+Local
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1200|±  |0.0145|
+|winogrande|Yaml   |none  |     0|acc     |0.4783|±  |0.0140|
+|piqa      |Yaml   |none  |     0|acc     |0.5669|±  |0.0116|
+|copa      |Yaml   |none  |     0|acc     |0.6100|±  |0.0490|
+
+==============================================
+H2O
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.2120|±  |0.0183|
+|winogrande|Yaml   |none  |     0|acc     |0.5430|±  |0.0140|
+|piqa      |Yaml   |none  |     0|acc     |0.7329|±  |0.0103|
+|copa      |Yaml   |none  |     0|acc     |0.6100|±  |0.0490|
+
+==============================================
+h2o-decay
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.2300|±  |0.0188|
+|winogrande|Yaml   |none  |     0|acc     |0.5683|±  |0.0139|
+|piqa      |Yaml   |none  |     0|acc     |0.7661|±  |0.0099|
+|copa      |Yaml   |none  |     0|acc     |0.7800|±  |0.0416|
+
+==============================================
+=================0.4=================
+Local
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1280|±  |0.0150|
+|winogrande|Yaml   |none  |     0|acc     |0.4972|±  |0.0141|
+|piqa      |Yaml   |none  |     0|acc     |0.6279|±  |0.0113|
+|copa      |Yaml   |none  |     0|acc     |0.5900|±  |0.0494|
+
+==============================================
+H2O
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.2460|±  |0.0193|
+|winogrande|Yaml   |none  |     0|acc     |0.5880|±  |0.0138|
+|piqa      |Yaml   |none  |     0|acc     |0.7465|±  |0.0102|
+|copa      |Yaml   |none  |     0|acc     |0.7100|±  |0.0456|
+
+==============================================
+h2o-decay
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.2820|±  |0.0201|
+|winogrande|Yaml   |none  |     0|acc     |0.6069|±  |0.0137|
+|piqa      |Yaml   |none  |     0|acc     |0.7791|±  |0.0097|
+|copa      |Yaml   |none  |     0|acc     |0.8400|±  |0.0368|
+
+==============================================
+=================0.5=================
+Local
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1440|±  |0.0157|
+|winogrande|Yaml   |none  |     0|acc     |0.4838|±  |0.0140|
+|piqa      |Yaml   |none  |     0|acc     |0.6844|±  |0.0108|
+|copa      |Yaml   |none  |     0|acc     |0.6300|±  |0.0485|
+
+==============================================
+H2O
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.2800|±  |0.0201|
+|winogrande|Yaml   |none  |     0|acc     |0.6361|±  |0.0135|
+|piqa      |Yaml   |none  |     0|acc     |0.7650|±  |0.0099|
+|copa      |Yaml   |none  |     0|acc     |0.7400|±  |0.0441|
+
+==============================================
+h2o-decay
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.3180|±  |0.0208|
+|winogrande|Yaml   |none  |     0|acc     |0.6448|±  |0.0135|
+|piqa      |Yaml   |none  |     0|acc     |0.7786|±  |0.0097|
+|copa      |Yaml   |none  |     0|acc     |0.8300|±  |0.0378|
+
+==============================================
+=================0.6=================
+Local
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1540|±  |0.0162|
+|winogrande|Yaml   |none  |     0|acc     |0.4949|±  |0.0141|
+|piqa      |Yaml   |none  |     0|acc     |0.7312|±  |0.0103|
+|copa      |Yaml   |none  |     0|acc     |0.6700|±  |0.0473|
+
+==============================================
+H2O
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.2960|±  |0.0204|
+|winogrande|Yaml   |none  |     0|acc     |0.6614|±  |0.0133|
+|piqa      |Yaml   |none  |     0|acc     |0.7797|±  |0.0097|
+|copa      |Yaml   |none  |     0|acc     |0.8500|±  |0.0359|
+
+==============================================
+h2o-decay
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.3300|±  |0.0210|
+|winogrande|Yaml   |none  |     0|acc     |0.6811|±  |0.0131|
+|piqa      |Yaml   |none  |     0|acc     |0.7829|±  |0.0096|
+|copa      |Yaml   |none  |     0|acc     |0.8500|±  |0.0359|
+
+==============================================
+=================0.8=================
+Local
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.1540|±  |0.0162|
+|winogrande|Yaml   |none  |     0|acc     |0.5572|±  |0.0140|
+|piqa      |Yaml   |none  |     0|acc     |0.7737|±  |0.0098|
+|copa      |Yaml   |none  |     0|acc     |0.7600|±  |0.0429|
+
+==============================================
+H2O
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.3440|±  |0.0213|
+|winogrande|Yaml   |none  |     0|acc     |0.6961|±  |0.0129|
+|piqa      |Yaml   |none  |     0|acc     |0.7873|±  |0.0095|
+|copa      |Yaml   |none  |     0|acc     |0.8200|±  |0.0386|
+
+==============================================
+h2o-decay
+|  Tasks   |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|----------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa|Yaml   |none  |     0|acc     |0.3340|±  |0.0211|
+|winogrande|Yaml   |none  |     0|acc     |0.6993|±  |0.0129|
+|piqa      |Yaml   |none  |     0|acc     |0.7845|±  |0.0096|
+|copa      |Yaml   |none  |     0|acc     |0.8600|±  |0.0349|
+
+==============================================

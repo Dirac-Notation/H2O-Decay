@@ -45,6 +45,7 @@ class LlamaAttention_heavy_hitter(nn.Module):
 
         self.heavy_budget_ratio = config.heavy_ratio
         self.recent_budget_ratio = config.recent_ratio
+        self.penalty = config.penalty
         self.attention_masks_next = None 
         self.heavy_budget = None
         self.recent_budget = None
@@ -114,9 +115,6 @@ class LlamaAttention_heavy_hitter(nn.Module):
 
         # upcast attention to fp32
         attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
-
-
-
 
         # attn_weights (BS, heads, q-tokens, k-tokens) 16, 15, 15 // 16, 1, 16
         current_scores_sum = attn_weights.sum(0).sum(1) # (heads, k-tokens)

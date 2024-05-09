@@ -40,17 +40,16 @@ def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
     mask_bottom[:,:, :heavy_budget, :heavy_budget] = True
 
     for token_index in range(heavy_budget, seq_length):
-        tmp_attn_index = nn.functional.softmax(attn_weights[:,:,token_index,:], dim=-1, dtype=torch.float32).to(dtype_attn_weights)
-
-        _, tmp_topk_index = accumulated_attention_score.topk(k=heavy_budget-1, dim=-1)
+        tmp_attn_index = tmp_attn[:,:,token_index,:]
+        
+        _, tmp_topk_index = torch.topk(accumulated_attention_score, k=heavy_budget-1, dim=-1)
 
         zeros_index = torch.zeros_like(tmp_attn_index, dtype=torch.bool)
-        mask_bottom_index = zeros_index.scatter(-1, tmp_topk_index, True) #(head, keys)
-        mask_bottom_index[:,:, token_index] = True
+        mask_bottom_index = zeros_index.scatter(-1, tmp_topk_index, True) # (head, keys)
+        mask_bottom_index[:,:, token_index] = True # self
 
         mask_bottom[:,:,token_index,:] = mask_bottom_index
-        accumulated_attention_score *= penalty
-        accumulated_attention_score += tmp_attn_index
+        accumulated_attention_score = accumulated_attention_score * penalty + tmp_attn_index
         accumulated_attention_score = accumulated_attention_score * mask_bottom_index
     
     return mask_bottom
@@ -134,8 +133,7 @@ class LlamaAttention_heavy_hitter(nn.Module):
         heavy_budget = int(self.heavy_budget_ratio * attn_weights.shape[-1])
         recent_budget = int(self.recent_budget_ratio * attn_weights.shape[-1])
 
-        
-        # # Heavy Hitter Mask (Based on global statistics)
+        # # Heavy Hitter Mask
         # if heavy_budget > 0:
         #     mask_bottom = local_heavy_hitter_mask(attn_weights, heavy_budget, self.penalty) # Default: No padding applied to input
         # else:
@@ -152,11 +150,6 @@ class LlamaAttention_heavy_hitter(nn.Module):
 
         # Heavy Hitter Mask (Based on global statistics)
         tmp_attn = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(attn_weights.dtype)
-        
-        penalty_factor = torch.arange(tmp_attn.shape[-2],0,-1).unsqueeze(1).to(attn_weights.dtype).to(attn_weights.device) - 1
-        penalty_factor = self.penalty**penalty_factor
-        tmp_attn *= penalty_factor
-        
         tmp_sum = torch.sum(tmp_attn, dim=-2) 
         _, tmp_topk = tmp_sum.topk(k=heavy_budget, dim=-1)
 
@@ -199,7 +192,7 @@ def convert_kvcache_llama_heavy_recent(model, config):
         if len(list(module.children())) > 0:
             model._modules[name] = convert_kvcache_llama_heavy_recent(module, config)
 
-        if isinstance(module, LlamaAttention):
+        if isinstance(module, LlamaAttention) or isinstance(module, LlamaAttention_heavy_hitter):
             model._modules[name] = LlamaAttention_heavy_hitter(config)
 
     return model

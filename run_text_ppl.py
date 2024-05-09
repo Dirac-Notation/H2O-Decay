@@ -47,7 +47,6 @@ from rouge import Rouge
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 
 from utils_hh.modify_llama import convert_kvcache_llama_heavy_recent, LlamaAttention_heavy_hitter
-from utils_hh.modify_gptneox import convert_kvcache_gpt_neox_heavy_recent, GPTNeoXAttention_Mask
 from utils_hh.modify_opt import convert_kvcache_opt_heavy_recent, OPTAttention_Mask
 
 
@@ -94,7 +93,6 @@ def set_seed(args):
 ENABLE_Heavy_Hitter_FUNCTIONS = {
     "llama": convert_kvcache_llama_heavy_recent,
     "opt": convert_kvcache_opt_heavy_recent,
-    "gpt_neox": convert_kvcache_gpt_neox_heavy_recent,
 }
 
 
@@ -102,11 +100,12 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--model_arch", type=str, default='llama')
-    parser.add_argument("--model_name", type=str, default='huggyllama/llama-13b')
-    parser.add_argument("--cache_dir", type=str, default='../../checkpoint/')
+    parser.add_argument("--model_name", type=str, default='huggyllama/llama-7b')
+    parser.add_argument("--cache_dir", type=str, default='../.cache/huggingface/hub')
 
-    parser.add_argument("--heavy_ratio", type=float, default=0.1)
-    parser.add_argument("--recent_ratio", type=float, default=0.1)
+    parser.add_argument("--heavy_ratio", type=float, default=0.2)
+    parser.add_argument("--recent_ratio", type=float, default=0.0)
+    parser.add_argument("--penalty", type=float, default=0.1)
 
     parser.add_argument("--length", type=int, default=64)
 
@@ -134,6 +133,7 @@ def main():
     config = AutoConfig.from_pretrained(model_name, cache_dir=args.cache_dir)
     config.heavy_ratio = args.heavy_ratio
     config.recent_ratio = args.recent_ratio
+    config.penalty = args.penalty
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, cache_dir=args.cache_dir)
 
@@ -148,6 +148,7 @@ def main():
     full_result = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
 
     ######### Enable HH
+    model.cpu()
     checkpoint = copy.deepcopy(model.state_dict())
     model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config)
     model.load_state_dict(checkpoint)
