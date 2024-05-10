@@ -259,7 +259,7 @@ def convert_kvcache_opt_heavy_recent(model, config):
         if len(list(module.children())) > 0:
             model._modules[name] = convert_kvcache_opt_heavy_recent(module, config)
 
-        if isinstance(module, OPTAttention):
+        if isinstance(module, OPTAttention) or isinstance(module, OPTAttention_Mask):
             model._modules[name] = OPTAttention_Mask(
                 embed_dim=module.embed_dim,
                 num_heads=config.num_attention_heads,

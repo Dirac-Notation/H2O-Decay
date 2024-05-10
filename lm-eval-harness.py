@@ -18,62 +18,45 @@ def lm_test(lm_model: huggingface.HFLM, task_dict: dict):
 
 # load task dataset
 initialize_tasks()
-# task_list = ["openbookqa", "winogrande", "piqa", "copa"]
-task_list = ["mmlu"]
-# task_list = ["copa"]
-task = tasks.get_task_dict(task_list, num_fewshot=1, fewshot_split="validation")
+task_list = ["openbookqa", "winogrande", "piqa", "copa"]
+# task_list = ["mmlu"]
 
-model_name = "meta-llama/Llama-2-7b-chat-hf"
-# model_name = "huggyllama/llama-7b"
+num_fewshot = 1
+
+# model_name = "meta-llama/Llama-2-7b-hf"
+# model_name = "meta-llama/Llama-2-7b-chat-hf"
+model_name = "huggyllama/llama-7b"
 # model_name = "facebook/opt-2.7b"
+# model_name ="mosaicml/mpt-7b"
 
 # Load the model
-lm = huggingface.HFLM(model_name, batch_size=4, cache_dir="/home/sangjun/nvme/hr/.cache/huggingface/hub")
+lm = huggingface.HFLM(model_name, batch_size=2, cache_dir="/home/sangjun/nvme/hr/.cache/huggingface/hub")
 
 # # Full Result
+# task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")
 # print("Full")
 # lm_test(lm, task)
 
-ratio = 0.5
+for ratio in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8]:
+    print(f"================={ratio}=================")
 
-# # Local Result
-# lm_model(model_name=model_name, lm=lm, heavy_ratio=0.0, recent_ratio=ratio, penalty=1.0)
-# lm.model.eval().half().cuda()
-# print("Local")
-# lm_test(lm, task)
+    # local
+    task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")
+    lm_model(model_name=model_name, lm=lm, heavy_ratio=0.0, recent_ratio=ratio, penalty=1.0)
+    lm.model.eval().half().cuda()
+    print("Local")
+    lm_test(lm, task)
 
-lm_model(model_name=model_name, lm=lm, heavy_ratio=ratio/2, recent_ratio=ratio/2, penalty=1.0)
-lm.model.eval().half().cuda()
-print("H2O")
-lm_test(lm, task)
+    # h2o
+    task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")
+    lm_model(model_name=model_name, lm=lm, heavy_ratio=ratio/2, recent_ratio=ratio/2, penalty=1.0)
+    lm.model.eval().half().cuda()
+    print("H2O")
+    lm_test(lm, task)
 
-# # Penalty Result
-# for i in [0.1, 0.2, 0.3, 0.4, 0.5]:
-#     lm_model(model_name=model_name, lm=lm, heavy_ratio=ratio, recent_ratio=0.0, penalty=i)
-#     lm.model.eval().half().cuda()
-#     print(i)
-#     lm_test(lm, task)
-
-# lm_model(model_name=model_name, lm=lm, heavy_ratio=ratio, recent_ratio=0.0, penalty=0.1)
-# lm.model.eval().half().cuda()
-# print("h2o-decay")
-# lm_test(lm, task)
-
-# for ratio in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8]:
-#     print(f"================={ratio}=================")
-
-#     # Local Result
-#     lm_model(model_name=model_name, lm=lm, heavy_ratio=0.0, recent_ratio=ratio, penalty=1.0)
-#     lm.model.eval().half().cuda()
-#     print("Local")
-#     lm_test(lm, task)
-
-#     lm_model(model_name=model_name, lm=lm, heavy_ratio=ratio/2, recent_ratio=ratio/2, penalty=1.0)
-#     lm.model.eval().half().cuda()
-#     print("H2O")
-#     lm_test(lm, task)
-
-#     lm_model(model_name=model_name, lm=lm, heavy_ratio=ratio, recent_ratio=0.0, penalty=0.1)
-#     lm.model.eval().half().cuda()
-#     print("h2o-decay")
-#     lm_test(lm, task)
+    # decay
+    task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")
+    lm_model(model_name=model_name, lm=lm, heavy_ratio=ratio, recent_ratio=0.0, penalty=0.1)
+    lm.model.eval().half().cuda()
+    print("h2o-decay")
+    lm_test(lm, task)
