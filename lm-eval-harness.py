@@ -30,7 +30,7 @@ model_name = "huggyllama/llama-7b"
 # model_name ="mosaicml/mpt-7b"
 
 # Load the model
-lm = huggingface.HFLM(model_name, batch_size=2, cache_dir="/home/sangjun/nvme/hr/.cache/huggingface/hub")
+lm = huggingface.HFLM(model_name, batch_size=2)
 
 # # Full Result
 # task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")

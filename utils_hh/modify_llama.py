@@ -43,9 +43,11 @@ class LlamaAttention_heavy_hitter(nn.Module):
         self.o_proj = nn.Linear(self.num_heads * self.head_dim, self.hidden_size, bias=False)
         self.rotary_emb = LlamaRotaryEmbedding(self.head_dim, max_position_embeddings=self.max_position_embeddings)
 
+        # h2o decay
         self.heavy_budget_ratio = config.heavy_ratio
         self.recent_budget_ratio = config.recent_ratio
         self.penalty = config.penalty
+        
         self.attention_masks_next = None 
         self.heavy_budget = None
         self.recent_budget = None
@@ -117,12 +119,13 @@ class LlamaAttention_heavy_hitter(nn.Module):
         attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
 
         # attn_weights (BS, heads, q-tokens, k-tokens) 16, 15, 15 // 16, 1, 16
-        current_scores_sum = attn_weights.sum(0).sum(1) # (heads, k-tokens)
-        # offset = attn_weights.gt(0).sum(0).sum(1)
+        penalty_factor = torch.arange(attn_weights.shape[-2],0,-1).unsqueeze(1).to(attn_weights.dtype).to(attn_weights.device) - 1
+        penalty_factor = self.penalty**penalty_factor
+        current_scores_sum = (attn_weights * penalty_factor).sum(0).sum(1) # (heads, k-tokens)
 
         # Accumulate attention scores
         if not self.previous_scores == None:
-            current_scores_sum[:, :-1] += self.previous_scores #(Enlarged Sequence)
+            current_scores_sum[:, :-1] += self.penalty * self.previous_scores #(Enlarged Sequence)
         else:
             self.heavy_budget = int(self.heavy_budget_ratio * current_scores_sum.shape[-1])
             self.recent_budget = int(self.recent_budget_ratio * current_scores_sum.shape[-1])
@@ -140,23 +143,30 @@ class LlamaAttention_heavy_hitter(nn.Module):
         attn_tokens_all = self.previous_scores.shape[-1]
     
         if attn_tokens_all > self.cache_budget:
-            # activate most recent k-cache
             if not self.recent_budget == 0:
+                # activate most recent k-cache
                 attn_mask[:, :-self.recent_budget] = 0
                 selected_set = self.previous_scores[:, :-self.recent_budget]
+                
+                if not self.heavy_budget == 0:
+                    _, keep_topk = selected_set.topk(k=self.heavy_budget, dim=-1, largest=True)
+                    attn_mask = attn_mask.scatter(-1, keep_topk, 1)
             else:
-                # activate historical best self.cache_budget - self.recent_budget tokens.
-                # self.previous_scores # (k-Cache - 1)
-                selected_set = self.previous_scores
-
-            if not self.heavy_budget == 0:
-                _, keep_topk = selected_set.topk(k=self.heavy_budget, dim=-1, largest=True)
-                attn_mask = attn_mask.scatter(-1, keep_topk, 1)
+                # all h2o
+                attn_mask[:, :-1] = 0
+                selected_set = self.previous_scores[:, :-1]
+                
+                if not self.heavy_budget == 0:
+                    _, keep_topk = selected_set.topk(k=self.heavy_budget-1, dim=-1, largest=True)
+                    attn_mask = attn_mask.scatter(-1, keep_topk, 1)
 
         self.attention_masks_next = attn_mask.unsqueeze(0).unsqueeze(2)
 
         score_mask = attn_mask[:,:-1]
-        score_mask[:, -self.recent_budget:] = 1
+        if not self.recent_budget == 0:
+            score_mask[:, -self.recent_budget:] = 1
+        else:
+            score_mask[:, -1] = 1
         self.previous_scores = self.previous_scores * score_mask
 
         attn_output = torch.matmul(attn_weights, value_states)
@@ -186,7 +196,7 @@ def convert_kvcache_llama_heavy_recent(model, config):
         if len(list(module.children())) > 0:
             model._modules[name] = convert_kvcache_llama_heavy_recent(module, config)
 
-        if isinstance(module, LlamaAttention):
+        if isinstance(module, LlamaAttention) or isinstance(module, LlamaAttention_heavy_hitter):
             model._modules[name] = LlamaAttention_heavy_hitter(config)
 
     return model

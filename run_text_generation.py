@@ -42,6 +42,8 @@ from transformers import (
     XLNetTokenizer,
 )
 
+from rouge import Rouge
+
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 
 from utils_hh.modify_llama import convert_kvcache_llama_heavy_recent, LlamaAttention_heavy_hitter
@@ -98,11 +100,10 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--model_arch", type=str, default='llama')
-    parser.add_argument("--model_name", type=str, default='huggyllama/llama-13b')
-    parser.add_argument("--cache_dir", type=str, default='../../checkpoint/')
+    parser.add_argument("--model_name", type=str, default='huggyllama/llama-7b')
 
-    parser.add_argument("--heavy_ratio", type=float, default=0.1)
-    parser.add_argument("--recent_ratio", type=float, default=0.1)
+    parser.add_argument("--cache_ratio", type=float, default=0.2)
+    parser.add_argument("--penalty", type=float, default=0.1)
 
     parser.add_argument("--length", type=int, default=64)
 
@@ -126,14 +127,12 @@ def main():
     prompt_text = 'In a small, bustling cafe nestled in the heart of a vibrant city, a serendipitous event unfolded, leaving a lasting impression on all who witnessed it. As the patrons sat sipping their coffees and engaging in animated conversations, a talented street musician entered the cafe, carrying a weathered guitar and radiating an aura of creativity.'
 
     model_name = args.model_name
-    config = AutoConfig.from_pretrained(model_name, cache_dir=args.cache_dir)
-    config.heavy_ratio = args.heavy_ratio
-    config.recent_ratio = args.recent_ratio
+    config = AutoConfig.from_pretrained(model_name)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, cache_dir=args.cache_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
 
     ######## Generate with Full Cache
-    model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=args.cache_dir)
+    model = AutoModelForCausalLM.from_pretrained(model_name)
     model.half().eval().cuda()
 
     # input_ids = tokenizer(prompt_text, return_tensors='pt').input_ids.to(model.device)
@@ -141,11 +140,17 @@ def main():
 
     generate_ids = model.generate(input_ids, max_new_tokens=args.length)
     result = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    result = result.replace(prompt_text, "")
     print("################## Generated Context with Full Cache ###################")
     print(result)
-
+    print()
 
     ######### Enable HH
+    config.heavy_ratio = args.cache_ratio/2
+    config.recent_ratio = args.cache_ratio/2
+    config.penalty = 1.0
+    
+    model.cpu()
     checkpoint = copy.deepcopy(model.state_dict())
     model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config)
     model.load_state_dict(checkpoint)
@@ -153,9 +158,38 @@ def main():
 
     generate_ids_hh = model.generate(input_ids, max_new_tokens=args.length)
     result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    result_hh = result_hh.replace(prompt_text, "")
     print("################## Generated Context with Heavy Hitter Oracle ###################")
     print(result_hh)
+    print()
 
+    rogue = Rouge()
+    score = rogue.get_scores(result_hh, result, avg=True)
+
+    print(f"rogue socre : {score}")
+    print()
+
+    ######### Enable Decay
+    config.heavy_ratio = args.cache_ratio
+    config.recent_ratio = 0.0
+    config.penalty = args.penalty
+    
+    model.cpu()
+    model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config)
+    model.load_state_dict(checkpoint)
+    model.half().eval().cuda()
+
+    generate_ids_hh = model.generate(input_ids, max_new_tokens=args.length)
+    result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    result_hh = result_hh.replace(prompt_text, "")
+    print("################## Generated Context with H2O Decay ###################")
+    print(result_hh)
+    print()
+
+    score = rogue.get_scores(result_hh, result, avg=True)
+
+    print(f"rogue socre : {score}")
+    print()
 
 if __name__ == "__main__":
     main()
