@@ -59,44 +59,17 @@ logger = logging.getLogger(__name__)
 
 MAX_LENGTH = int(10000)  # Hardcoded max length to avoid infinite loop
 
-MODEL_CLASSES = {
-    "gpt2": (GPT2LMHeadModel, GPT2Tokenizer),
-    "ctrl": (CTRLLMHeadModel, CTRLTokenizer),
-    "openai-gpt": (OpenAIGPTLMHeadModel, OpenAIGPTTokenizer),
-    "xlnet": (XLNetLMHeadModel, XLNetTokenizer),
-    "transfo-xl": (TransfoXLLMHeadModel, TransfoXLTokenizer),
-    "xlm": (XLMWithLMHeadModel, XLMTokenizer),
-}
-
-# Padding text to help Transformer-XL and XLNet with short prompts as proposed by Aman Rusia
-# in https://github.com/rusiaaman/XLNet-gen#methodology
-# and https://medium.com/@amanrusia/xlnet-speaks-comparison-to-gpt-2-ea1a4e9ba39e
-PREFIX = """In 1991, the remains of Russian Tsar Nicholas II and his family
-(except for Alexei and Maria) are discovered.
-The voice of Nicholas's young son, Tsarevich Alexei Nikolaevich, narrates the
-remainder of the story. 1883 Western Siberia,
-a young Grigori Rasputin is asked by his father and a group of men to perform magic.
-Rasputin has a vision and denounces one of the men as a horse thief. Although his
-father initially slaps him for making such an accusation, Rasputin watches as the
-man is chased outside and beaten. Twenty years later, Rasputin sees a vision of
-the Virgin Mary, prompting him to become a priest. Rasputin quickly becomes famous,
-with people, even a bishop, begging for his blessing. <eod> </s> <eos>"""
-
-
 def set_seed(args):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    if args.n_gpu > 0:
-        torch.cuda.manual_seed_all(args.seed)
-
+    torch.cuda.manual_seed_all(args.seed)
 
 ENABLE_Heavy_Hitter_FUNCTIONS = {
     "llama": convert_kvcache_llama_heavy_recent,
     "opt": convert_kvcache_opt_heavy_recent,
 }
 
-
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--model_arch", type=str, default='llama')
@@ -108,19 +81,15 @@ def main():
     parser.add_argument("--length", type=int, default=64)
 
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
-    parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
-    parser.add_argument(
-        "--fp16",
-        action="store_true",
-        help="Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit",
-    )
+
     args = parser.parse_args()
 
-    args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-    args.n_gpu = 0 if args.no_cuda else torch.cuda.device_count()
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    logger.warning(f"device: {args.device}, n_gpu: {args.n_gpu}, 16-bits training: {args.fp16}")
+    logger.warning(f"device: {args.device}")
     set_seed(args)
+
+    rogue = Rouge()
 
     # Change to your custom prompt text
     # prompt_text = 'In the year 2087, humanity has achieved remarkable technological advancements and established colonies on multiple planets within the Milky Way galaxy. Interstellar travel has become commonplace, with faster-than-light spacecraft enabling people to explore distant star systems. Earth has undergone significant changes due to sustainable development efforts, such as harnessing renewable energy sources and implementing widespread ecological restoration projects. However, alongside these triumphs, new challenges have emerged, including the rise of artificial intelligence, ethical dilemmas surrounding genetic engineering, and interplanetary political tensions. Against this backdrop, a team of intrepid scientists embarks on a mission to uncover the secrets of an ancient alien civilization, hidden deep within an uncharted exoplanet. As they navigate treacherous terrains and encounter otherworldly phenomena, they must confront their own fears and reconcile humanity\'s thirst for knowledge with the potential consequences of uncovering secrets that were better left buried. The fate of both their mission and the future of humanity hang in the balance.'
@@ -133,11 +102,14 @@ def main():
 
     ######## Generate with Full Cache
     model = AutoModelForCausalLM.from_pretrained(model_name)
-    model.half().eval().cuda()
+    model.half().eval()
+    
+    check_point = copy.deepcopy(model.state_dict())
 
     # input_ids = tokenizer(prompt_text, return_tensors='pt').input_ids.to(model.device)
-    input_ids = tokenizer(prompt_text, add_special_tokens=False, return_tensors='pt').input_ids.to(model.device)
+    input_ids = tokenizer(prompt_text, add_special_tokens=False, return_tensors='pt').input_ids.to(args.device)
 
+    model.to(args.device)
     generate_ids = model.generate(input_ids, max_new_tokens=args.length)
     result = tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     result = result.replace(prompt_text, "")
@@ -150,11 +122,9 @@ def main():
     config.recent_ratio = args.cache_ratio/2
     config.penalty = 1.0
     
-    model.cpu()
-    checkpoint = copy.deepcopy(model.state_dict())
     model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config)
-    model.load_state_dict(checkpoint)
-    model.half().eval().cuda()
+    model.load_state_dict(check_point)
+    model.half().eval().to(args.device)
 
     generate_ids_hh = model.generate(input_ids, max_new_tokens=args.length)
     result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
@@ -163,10 +133,9 @@ def main():
     print(result_hh)
     print()
 
-    rogue = Rouge()
     score = rogue.get_scores(result_hh, result, avg=True)
 
-    print(f"rogue socre : {score}")
+    print(score)
     print()
 
     ######### Enable Decay
@@ -174,10 +143,9 @@ def main():
     config.recent_ratio = 0.0
     config.penalty = args.penalty
     
-    model.cpu()
     model = ENABLE_Heavy_Hitter_FUNCTIONS[args.model_arch](model, config)
-    model.load_state_dict(checkpoint)
-    model.half().eval().cuda()
+    model.load_state_dict(check_point)
+    model.half().eval().to(args.device)
 
     generate_ids_hh = model.generate(input_ids, max_new_tokens=args.length)
     result_hh = tokenizer.batch_decode(generate_ids_hh, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
@@ -188,8 +156,5 @@ def main():
 
     score = rogue.get_scores(result_hh, result, avg=True)
 
-    print(f"rogue socre : {score}")
+    print(score)
     print()
-
-if __name__ == "__main__":
-    main()

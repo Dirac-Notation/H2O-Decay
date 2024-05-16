@@ -1,0 +1,66 @@
+3-shot
+Full
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.287, rouge_2: 0.105, rouge_l: 0.239
+H2O
+Enabling H2O KV cache
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.273, rouge_2: 0.102, rouge_l: 0.234
+Enabling H2O KV cache
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.282, rouge_2: 0.107, rouge_l: 0.238
+Enabling H2O KV cache
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.281, rouge_2: 0.101, rouge_l: 0.234
+Enabling H2O KV cache
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.281, rouge_2: 0.100, rouge_l: 0.236
+Enabling H2O KV cache
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.282, rouge_2: 0.099, rouge_l: 0.232
+Enabling H2O KV cache
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.279, rouge_2: 0.097, rouge_l: 0.229
+Decay
+Enabling H2O KV cache
+Enable Decay
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.287, rouge_2: 0.104, rouge_l: 0.244
+Enabling H2O KV cache
+Enable Decay
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.289, rouge_2: 0.106, rouge_l: 0.239
+Enabling H2O KV cache
+Enable Decay
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.281, rouge_2: 0.096, rouge_l: 0.230
+Enabling H2O KV cache
+Enable Decay
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.295, rouge_2: 0.113, rouge_l: 0.248
+Enabling H2O KV cache
+Enable Decay
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.287, rouge_2: 0.103, rouge_l: 0.240
+Enabling H2O KV cache
+Enable Decay
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.295, rouge_2: 0.109, rouge_l: 0.242
+Enabling H2O KV cache
+Enable Decay
+1000
+Sample 100 Examples from 1000 samples
+rouge_1: 0.294, rouge_2: 0.112, rouge_l: 0.244

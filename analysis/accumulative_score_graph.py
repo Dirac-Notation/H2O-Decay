@@ -7,18 +7,20 @@ import numpy as np
 model_name = "bert-base-uncased"
 # model_name = "huggyllama/llama-7b"
 
-cache_dir = "/data/.cache"
+forget = 1.0
+
+path = "bert"
 
 if "bert" in model_name:
-    tokenizer = BertTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
-    model = BertModel.from_pretrained(model_name, cache_dir=cache_dir, output_attentions=True)
+    tokenizer = BertTokenizer.from_pretrained(model_name)
+    model = BertModel.from_pretrained(model_name, output_attentions=True)
 else:
-    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
-    model = AutoModel.from_pretrained(model_name, cache_dir=cache_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name)
 
-text = "Dan gathered together extra clothes and extra food in case of a disaster, but the _ got wet and went bad."
+prompt_text = "Dan gathered together extra clothes and extra food in case of a disaster, but the _ got wet and went bad."
 
-input_ids = torch.tensor([tokenizer.encode(text, add_special_tokens=True)])
+input_ids = torch.tensor([tokenizer.encode(prompt_text, add_special_tokens=True)])
 
 model.eval()
 
@@ -36,6 +38,7 @@ print("Number of tokens:", len(attentions[0][0][0]))
 print("Number of tokens:", len(attentions[0][0][0][0]))
 
 xlabel = [tokenizer.decode(i) for i in input_ids[0]]
+xlabel = [i.replace(" ", "") for i in xlabel]
 xlabel = [f"{j} {i}" for i,j in enumerate(xlabel)][::-1]
 
 attention = torch.stack(attentions)
@@ -46,18 +49,18 @@ if "bert" not in model_name:
 
 softmax = torch.nn.functional.softmax(attention, dim=-1)
 
-# if "bert" not in model_name:
-#     divider = torch.arange(softmax.shape[-1], 0, -1) - 1
-#     penalty = 0.1**divider
-#     penalty = penalty.unsqueeze(1)
-#     softmax *= penalty
+if "bert" not in model_name:
+    divider = torch.arange(softmax.shape[-1], 0, -1) - 1
+    penalty = forget**divider
+    penalty = penalty.unsqueeze(1)
+    softmax *= penalty
 
 total_score = torch.sum(softmax, dim=-2).numpy()
 
-# if "bert" in model_name:
-#     total_score -= 0.9
-
 for i in range(len(attentions)):
+    if not os.path.exists(f"tmp/{path}/{i}"):
+        os.makedirs(f"tmp/{path}/{i}")
+        
     for j in range(len(attentions[0][0])):
         plt.figure(figsize=(10, 10))
         scores = total_score[i][0][j][::-1]
@@ -66,10 +69,13 @@ for i in range(len(attentions)):
         color = ["tab:blue"] * len(scores)
         for idx in top5_indices:
             color[idx] = "tab:red"
-            
-        plt.barh(xlabel, scores, color=color)
         
-        if not os.path.exists(f"tmp/bert/{i}"):
-            os.makedirs(f"tmp/bert/{i}")
-        plt.savefig(f"tmp/bert/{i}/{j}.png")
+        plt.barh(xlabel, scores, color=color)
+        plt.xlabel("Accumulative Attention Score", fontsize=20)
+        plt.ylabel("Sequences", fontsize=20)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        plt.tight_layout()
+        
+        plt.savefig(f"tmp/{path}/{i}/{j}.png")
         plt.close()
