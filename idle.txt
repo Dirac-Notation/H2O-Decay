@@ -1,0 +1,149 @@
+model: meta-llama/Llama-2-7b-hf
+fewshot: 1
+=================0.1=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.1840|±  |0.0173|
+|             |       |none  |     1|acc_norm|0.3000|±  |0.0205|
+|winogrande   |Yaml   |none  |     1|acc     |0.4980|±  |0.0141|
+|piqa         |Yaml   |none  |     1|acc     |0.7345|±  |0.0103|
+|             |       |none  |     1|acc_norm|0.7524|±  |0.0101|
+|copa         |Yaml   |none  |     1|acc     |0.5900|±  |0.0494|
+|mathqa       |Yaml   |none  |     1|acc     |0.2851|±  |0.0083|
+|             |       |none  |     1|acc_norm|0.2868|±  |0.0083|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7066|±  |0.0093|
+|             |       |none  |     1|acc_norm|0.7016|±  |0.0094|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4172|±  |0.0144|
+|             |       |none  |     1|acc_norm|0.4497|±  |0.0145|
+
+==============================================
+=================0.2=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.3260|±  |0.0210|
+|             |       |none  |     1|acc_norm|0.4220|±  |0.0221|
+|winogrande   |Yaml   |none  |     1|acc     |0.6393|±  |0.0135|
+|piqa         |Yaml   |none  |     1|acc     |0.7688|±  |0.0098|
+|             |       |none  |     1|acc_norm|0.7845|±  |0.0096|
+|copa         |Yaml   |none  |     1|acc     |0.8200|±  |0.0386|
+|mathqa       |Yaml   |none  |     1|acc     |0.2918|±  |0.0083|
+|             |       |none  |     1|acc_norm|0.2905|±  |0.0083|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7858|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.7955|±  |0.0083|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4608|±  |0.0146|
+|             |       |none  |     1|acc_norm|0.4983|±  |0.0146|
+
+==============================================
+=================0.3=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.3460|±  |0.0213|
+|             |       |none  |     1|acc_norm|0.4480|±  |0.0223|
+|winogrande   |Yaml   |none  |     1|acc     |0.6898|±  |0.0130|
+|piqa         |Yaml   |none  |     1|acc     |0.7699|±  |0.0098|
+|             |       |none  |     1|acc_norm|0.7856|±  |0.0096|
+|copa         |Yaml   |none  |     1|acc     |0.8600|±  |0.0349|
+|mathqa       |Yaml   |none  |     1|acc     |0.2874|±  |0.0083|
+|             |       |none  |     1|acc_norm|0.2861|±  |0.0083|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7866|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.7963|±  |0.0083|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4710|±  |0.0146|
+|             |       |none  |     1|acc_norm|0.4949|±  |0.0146|
+
+==============================================
+=================0.4=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.3420|±  |0.0212|
+|             |       |none  |     1|acc_norm|0.4400|±  |0.0222|
+|winogrande   |Yaml   |none  |     1|acc     |0.6946|±  |0.0129|
+|piqa         |Yaml   |none  |     1|acc     |0.7682|±  |0.0098|
+|             |       |none  |     1|acc_norm|0.7884|±  |0.0095|
+|copa         |Yaml   |none  |     1|acc     |0.8500|±  |0.0359|
+|mathqa       |Yaml   |none  |     1|acc     |0.2894|±  |0.0083|
+|             |       |none  |     1|acc_norm|0.2894|±  |0.0083|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7879|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.7992|±  |0.0082|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4693|±  |0.0146|
+|             |       |none  |     1|acc_norm|0.5009|±  |0.0146|
+
+==============================================
+=================0.5=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.3560|±  |0.0214|
+|             |       |none  |     1|acc_norm|0.4420|±  |0.0222|
+|winogrande   |Yaml   |none  |     1|acc     |0.6882|±  |0.0130|
+|piqa         |Yaml   |none  |     1|acc     |0.7693|±  |0.0098|
+|             |       |none  |     1|acc_norm|0.7900|±  |0.0095|
+|copa         |Yaml   |none  |     1|acc     |0.8500|±  |0.0359|
+|mathqa       |Yaml   |none  |     1|acc     |0.2955|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.2941|±  |0.0083|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7866|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.8001|±  |0.0082|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4718|±  |0.0146|
+|             |       |none  |     1|acc_norm|0.5026|±  |0.0146|
+
+==============================================
+=================0.6=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.3660|±  |0.0216|
+|             |       |none  |     1|acc_norm|0.4380|±  |0.0222|
+|winogrande   |Yaml   |none  |     1|acc     |0.6867|±  |0.0130|
+|piqa         |Yaml   |none  |     1|acc     |0.7720|±  |0.0098|
+|             |       |none  |     1|acc_norm|0.7905|±  |0.0095|
+|copa         |Yaml   |none  |     1|acc     |0.8500|±  |0.0359|
+|mathqa       |Yaml   |none  |     1|acc     |0.2985|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.2948|±  |0.0083|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7875|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.7992|±  |0.0082|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4676|±  |0.0146|
+|             |       |none  |     1|acc_norm|0.5009|±  |0.0146|
+
+==============================================
+=================0.8=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.3620|±  |0.0215|
+|             |       |none  |     1|acc_norm|0.4380|±  |0.0222|
+|winogrande   |Yaml   |none  |     1|acc     |0.6906|±  |0.0130|
+|piqa         |Yaml   |none  |     1|acc     |0.7720|±  |0.0098|
+|             |       |none  |     1|acc_norm|0.7927|±  |0.0095|
+|copa         |Yaml   |none  |     1|acc     |0.8500|±  |0.0359|
+|mathqa       |Yaml   |none  |     1|acc     |0.3002|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.2982|±  |0.0084|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7862|±  |0.0084|
+|             |       |none  |     1|acc_norm|0.7967|±  |0.0083|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4676|±  |0.0146|
+|             |       |none  |     1|acc_norm|0.5017|±  |0.0146|
+
+==============================================
+fewshot: 0
+=================0.1=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     0|acc     |0.1420|±  |0.0156|
+|             |       |none  |     0|acc_norm|0.2640|±  |0.0197|
+|winogrande   |Yaml   |none  |     0|acc     |0.4980|±  |0.0141|
+|piqa         |Yaml   |none  |     0|acc     |0.6110|±  |0.0114|
+|             |       |none  |     0|acc_norm|0.6099|±  |0.0114|
+|copa         |Yaml   |none  |     0|acc     |0.6200|±  |0.0488|
+|mathqa       |Yaml   |none  |     0|acc     |0.2425|±  |0.0078|
+|             |       |none  |     0|acc_norm|0.2442|±  |0.0079|
+|arc_easy     |Yaml   |none  |     0|acc     |0.3607|±  |0.0099|
+|             |       |none  |     0|acc_norm|0.3624|±  |0.0099|
+|arc_challenge|Yaml   |none  |     0|acc     |0.2790|±  |0.0131|
+|             |       |none  |     0|acc_norm|0.2935|±  |0.0133|
+
+==============================================
+=================0.2=================
+H2O-decay

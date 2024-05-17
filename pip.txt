@@ -8,7 +8,7 @@ transformers<4.36.0
 evaluate
 sacrebleu
 sqlitedict
-pysqlite3
+# pysqlite3
 wheel
 peft
 pytablewriter

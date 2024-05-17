@@ -51,6 +51,19 @@ def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
         mask_bottom[:,:,token_index,:] = mask_bottom_index
         accumulated_attention_score = accumulated_attention_score * penalty + tmp_attn_index
         accumulated_attention_score = accumulated_attention_score * mask_bottom_index
+        
+        # # idle
+        # tmp_attn_index = tmp_attn[:,:,token_index,:]
+        
+        # accumulated_attention_score = tmp_attn_index
+        
+        # _, tmp_topk_index = torch.topk(accumulated_attention_score, k=heavy_budget-1, dim=-1)
+
+        # zeros_index = torch.zeros_like(tmp_attn_index, dtype=torch.bool)
+        # mask_bottom_index = zeros_index.scatter(-1, tmp_topk_index, True) # (head, keys)
+        # mask_bottom_index[:,:, token_index] = True # self
+
+        # mask_bottom[:,:,token_index,:] = mask_bottom_index
     
     return mask_bottom
 
@@ -148,7 +161,7 @@ class LlamaAttention_heavy_hitter(nn.Module):
         # mask_bottom = ones
         attn_weights[~mask_bottom] = torch.min(attention_mask)
         
-        np.save("mask_bottom.npy", mask_bottom.cpu().detach().numpy()); exit()
+        # np.save("mask_bottom.npy", mask_bottom.cpu().detach().numpy()); exit()
 
         # upcast attention to fp32
         attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)

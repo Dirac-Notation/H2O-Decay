@@ -48,9 +48,21 @@ def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
         mask_bottom_index[:, token_index] = True
 
         mask_bottom[:,token_index,:] = mask_bottom_index
-        accumulated_attention_score *= penalty
-        accumulated_attention_score += tmp_attn_index
+        accumulated_attention_score = accumulated_attention_score * penalty + tmp_attn_index
         accumulated_attention_score = accumulated_attention_score * mask_bottom_index
+        
+        # # idle
+        # tmp_attn_index = tmp_attn[:,token_index,:]
+        
+        # accumulated_attention_score = tmp_attn_index
+        
+        # _, tmp_topk_index = accumulated_attention_score.topk(k=heavy_budget-1, dim=-1)
+        
+        # zeros_index = torch.zeros_like(tmp_attn_index, dtype=torch.bool)
+        # mask_bottom_index = zeros_index.scatter(-1, tmp_topk_index, True) #(head, keys)
+        # mask_bottom_index[:, token_index] = True
+
+        # mask_bottom[:,token_index,:] = mask_bottom_index
 
     mask_bottom = torch.tril(mask_bottom, diagonal=0)
 

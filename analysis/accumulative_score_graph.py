@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
-model_name = "bert-base-uncased"
-# model_name = "huggyllama/llama-7b"
+# model_name = "bert-base-uncased"
+model_name = "huggyllama/llama-7b"
 
 forget = 1.0
 
@@ -20,7 +20,7 @@ else:
 
 prompt_text = "Dan gathered together extra clothes and extra food in case of a disaster, but the _ got wet and went bad."
 
-input_ids = torch.tensor([tokenizer.encode(prompt_text, add_special_tokens=True)])
+input_ids = torch.tensor([tokenizer.encode(prompt_text)])
 
 model.eval()
 
@@ -29,6 +29,7 @@ with torch.no_grad():
         outputs = model(input_ids)
     else:
         outputs = model(input_ids, output_attentions=True)
+
     attentions = outputs[-1]
 
 print("Number of layers:", len(attentions), "  (from the transformer block)")
