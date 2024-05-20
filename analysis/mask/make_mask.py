@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from transformers import AutoTokenizer
+from tqdm import tqdm
 
 dir_path = os.path.dirname(__file__)
 
@@ -16,36 +17,36 @@ xlabel = [i.replace(" ", "") for i in xlabel]
 xlabel = [f"{i}" for i in xlabel]
 xticks_positions = np.arange(0, len(xlabel), 1)
 
-for file_name in ["a2sf_010", "a2sf_050", "h2o", "local", "ideal"]:
-    
-    file_path = os.path.join(dir_path, f"{file_name}.npy")
-    result_path = os.path.join(dir_path, f"{file_name}")
-    
-    tensor = np.load(file_path).squeeze(0).astype(float)
+for layer in tqdm(range(32)):
 
-    if file_name == "local":
-        tensor = np.triu(tensor, -9)
+    for method in ["a2sf_090"]: # "a2sf_010", "a2sf_050", "a2sf_090", "h2o", "local", "ideal"
+        
+        file_path = os.path.join(dir_path, method, f"{layer}.npy")
+        result_path = os.path.join(dir_path, "mask", str(layer), method)
+        
+        tensor = np.load(file_path).squeeze(0).astype(float)
 
-    if not os.path.exists(result_path):
-        os.makedirs(result_path)
+        if method == "local":
+            tensor = np.triu(tensor, -9)
 
-    plt.figure(figsize=(4, 4))
+        if not os.path.exists(result_path):
+            os.makedirs(result_path)
 
-    for ln in range(32):
-        tmp = tensor[ln]
+        for ln in range(32):
+            tmp = tensor[ln]
 
-        tmp *= -0.5
-        tmp += 0.5
+            tmp *= -0.5
+            tmp += 0.5
 
-        ones = np.ones_like(tmp)
-        ones = np.triu(ones, 1)
+            ones = np.ones_like(tmp)
+            ones = np.triu(ones, 1)
 
-        tmp += ones*tmp
+            tmp += ones*tmp
 
-        plt.figure(figsize=(10,10))
-        plt.xticks(xticks_positions, xlabel, rotation=90, fontsize=20)
-        plt.yticks([])
-        plt.imshow(tmp, cmap="Blues_r")
-        plt.tight_layout()
-        plt.savefig(os.path.join(result_path, f"test_{ln}.png"))
-        plt.close()
+            plt.figure(figsize=(10,10))
+            plt.xticks(xticks_positions, xlabel, rotation=90, fontsize=20)
+            plt.yticks([])
+            plt.imshow(tmp, cmap="Blues_r")
+            plt.tight_layout()
+            plt.savefig(os.path.join(result_path, f"test_{ln}.png"))
+            plt.close()
