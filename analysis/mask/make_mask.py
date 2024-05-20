@@ -8,8 +8,16 @@ from tqdm import tqdm
 
 dir_path = os.path.dirname(__file__)
 
+dataset = "mathqa"
+
 tokenizer = AutoTokenizer.from_pretrained("huggyllama/llama-7b", use_fast=True)
-prompt_text = "Dan gathered together extra clothes and extra food in case of a disaster, but the _ got wet and went bad."
+
+prompts = {
+    "winogrande": "Dan gathered together extra clothes and extra food in case of a disaster, but the _ got wet and went bad.",
+    "mathqa" : "Question: how many positive integers q between 200 and 300 ( both inclusive ) are not divisible by 2 , 3 or 5 ?\nAnswer:"
+}
+
+prompt_text = prompts[dataset]
 
 input_ids = torch.tensor([tokenizer.encode(prompt_text)])
 xlabel = [tokenizer.decode(i) for i in input_ids[0]]
@@ -19,34 +27,36 @@ xticks_positions = np.arange(0, len(xlabel), 1)
 
 for layer in tqdm(range(32)):
 
-    for method in ["a2sf_090"]: # "a2sf_010", "a2sf_050", "a2sf_090", "h2o", "local", "ideal"
-        
-        file_path = os.path.join(dir_path, method, f"{layer}.npy")
-        result_path = os.path.join(dir_path, "mask", str(layer), method)
-        
-        tensor = np.load(file_path).squeeze(0).astype(float)
+    for method in ["a2sf_010", "a2sf_050", "a2sf_070", "a2sf_090", "h2o", "local", "ideal"]:
+        try:
+            file_path = os.path.join(dir_path, dataset, method, f"{layer}.npy")
+            result_path = os.path.join(dir_path, dataset, "mask", str(layer), method)
+            
+            tensor = np.load(file_path).squeeze(0).astype(float)
 
-        if method == "local":
-            tensor = np.triu(tensor, -9)
+            if method == "local":
+                tensor = np.triu(tensor, -(np.sum(tensor[0,0,-1])-1))
 
-        if not os.path.exists(result_path):
-            os.makedirs(result_path)
+            if not os.path.exists(result_path):
+                os.makedirs(result_path)
 
-        for ln in range(32):
-            tmp = tensor[ln]
+            for ln in range(32):
+                tmp = tensor[ln]
 
-            tmp *= -0.5
-            tmp += 0.5
+                tmp *= -0.5
+                tmp += 0.5
 
-            ones = np.ones_like(tmp)
-            ones = np.triu(ones, 1)
+                ones = np.ones_like(tmp)
+                ones = np.triu(ones, 1)
 
-            tmp += ones*tmp
+                tmp += ones*tmp
 
-            plt.figure(figsize=(10,10))
-            plt.xticks(xticks_positions, xlabel, rotation=90, fontsize=20)
-            plt.yticks([])
-            plt.imshow(tmp, cmap="Blues_r")
-            plt.tight_layout()
-            plt.savefig(os.path.join(result_path, f"test_{ln}.png"))
-            plt.close()
+                plt.figure(figsize=(10,10))
+                plt.xticks(xticks_positions, xlabel, rotation=90, fontsize=20)
+                plt.yticks([])
+                plt.imshow(tmp, cmap="Blues_r")
+                plt.tight_layout()
+                plt.savefig(os.path.join(result_path, f"test_{ln}.png"))
+                plt.close()
+        except:
+            continue

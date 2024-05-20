@@ -17,6 +17,8 @@ def compare_mask(mask1, mask2):
     
     return np.mean(result)
 
+dataset = "mathqa"
+
 mask_list = {
     "local": [],
     "h2o": [],
@@ -28,16 +30,16 @@ mask_list = {
 for layer in range(32):
     
     dir_path = os.path.dirname(__file__)
-    attention_path = os.path.join(dir_path, "ideal", f"{layer}.npy")
+    attention_path = os.path.join(dir_path, dataset, "ideal", f"{layer}.npy")
 
     ideal_mask = np.load(attention_path) # 1, 32, 25, 25
     
     for mask_name in mask_list.keys():
-        mask_path = os.path.join(dir_path, mask_name, f"{layer}.npy")
+        mask_path = os.path.join(dir_path, dataset, mask_name, f"{layer}.npy")
         mask = np.load(mask_path) # 1, 32, 25, 25
         
         if mask_name == "local":
-            mask = np.triu(mask, -9)
+            mask = np.triu(mask, -(np.sum(mask[0,0,-1])-1))
         
         mask_list[mask_name].append(compare_mask(ideal_mask, mask))
 
@@ -48,4 +50,4 @@ for a, b in mask_list.items():
     print(f"{a}: {mean:.3f}")
 
 plt.legend()
-plt.savefig(os.path.join(dir_path, "Similarity.png"))
+plt.savefig(os.path.join(dir_path, dataset, "Similarity.png"))
