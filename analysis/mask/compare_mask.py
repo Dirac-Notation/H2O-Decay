@@ -6,48 +6,55 @@ def compare_mask(mask1, mask2):
     result = list()
     
     for i in range(mask1.shape[1]):
-        mask_a = mask1[0,i]
-        mask_b = mask2[0,i]
+        mask_a = mask1[0, i, :, :]
+        mask_b = mask2[0, i, :, :]
         
-        intersection = np.count_nonzero(np.logical_and(mask_a, mask_b))/np.count_nonzero(mask_a)
-        
-        result.append(intersection)
+        for j in range(mask_a.shape[-2]):
+            vec_a = mask_a[j, :]
+            vec_b = mask_b[j, :]
+
+            product = np.dot(vec_a, vec_b)
+            similar = product/(np.linalg.norm(vec_a) * np.linalg.norm(vec_b) + 0.0001)
+
+            result.append(similar)
     
     result = np.array(result)
     
     return np.mean(result)
 
-dataset = "mathqa"
-
-mask_list = {
-    "local": [],
-    "h2o": [],
-    "a2sf_010": [],
-    "a2sf_050": [],
-    "a2sf_090": []
-}
-
-for layer in range(32):
+for dataset in ["winogrande", "piqa", "openbookqa", "arc_e", "mathqa"]:
     
-    dir_path = os.path.dirname(__file__)
-    attention_path = os.path.join(dir_path, dataset, "ideal", f"{layer}.npy")
-
-    ideal_mask = np.load(attention_path) # 1, 32, 25, 25
+    mask_list = {
+        "local": [],
+        "h2o": [],
+        "a2sf_010": [],
+        "a2sf_050": []
+    }
     
-    for mask_name in mask_list.keys():
-        mask_path = os.path.join(dir_path, dataset, mask_name, f"{layer}.npy")
-        mask = np.load(mask_path) # 1, 32, 25, 25
+    print(dataset)
+    for layer in range(32):
         
-        if mask_name == "local":
-            mask = np.triu(mask, -(np.sum(mask[0,0,-1])-1))
+        dir_path = os.path.dirname(__file__)
+        attention_path = os.path.join(dir_path, dataset, "ideal", f"{layer}.npy")
+
+        ideal_mask = np.load(attention_path) # 1, 32, 25, 25
         
-        mask_list[mask_name].append(compare_mask(ideal_mask, mask))
+        for mask_name in mask_list.keys():
+            mask_path = os.path.join(dir_path, dataset, mask_name, f"{layer}.npy")
+            mask = np.load(mask_path) # 1, 32, 25, 25
+            
+            if mask_name == "local":
+                mask = np.triu(mask, -(np.count_nonzero(mask[0,0,-1])-2))
+            
+            mask_list[mask_name].append(compare_mask(ideal_mask, mask))
 
-for a, b in mask_list.items():
-    plt.plot(b, label=a)
-    
-    mean = sum(b)/len(b)
-    print(f"{a}: {mean:.3f}")
+    for a, b in mask_list.items():
+        if b != []:
+            plt.plot(b, label=a)
+            
+            mean = sum(b)/len(b)
+            print(f"{mean:.3f}")
 
-plt.legend()
-plt.savefig(os.path.join(dir_path, dataset, "Similarity.png"))
+    plt.legend()
+    plt.savefig(os.path.join(dir_path, dataset, "Similarity.png"))
+    plt.close()

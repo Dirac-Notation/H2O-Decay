@@ -1,5 +1,23 @@
 model: meta-llama/Llama-2-7b-hf
 fewshot: 1
+=================0.0=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.3300|±  |0.0210|
+|             |       |none  |     1|acc_norm|0.4340|±  |0.0222|
+|winogrande   |Yaml   |none  |     1|acc     |0.5770|±  |0.0139|
+|piqa         |Yaml   |none  |     1|acc     |0.7644|±  |0.0099|
+|             |       |none  |     1|acc_norm|0.7851|±  |0.0096|
+|copa         |Yaml   |none  |     1|acc     |0.8600|±  |0.0349|
+|mathqa       |Yaml   |none  |     1|acc     |0.2580|±  |0.0080|
+|             |       |none  |     1|acc_norm|0.2576|±  |0.0080|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7517|±  |0.0089|
+|             |       |none  |     1|acc_norm|0.7462|±  |0.0089|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4403|±  |0.0145|
+|             |       |none  |     1|acc_norm|0.4565|±  |0.0146|
+
+==============================================
 =================0.1=================
 H2O-decay
 |    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
@@ -163,6 +181,24 @@ H2O-decay
 
 ==============================================
 fewshot: 0
+=================0.0=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     0|acc     |0.2240|±  |0.0187|
+|             |       |none  |     0|acc_norm|0.3820|±  |0.0218|
+|winogrande   |Yaml   |none  |     0|acc     |0.5770|±  |0.0139|
+|piqa         |Yaml   |none  |     0|acc     |0.7606|±  |0.0100|
+|             |       |none  |     0|acc_norm|0.7715|±  |0.0098|
+|copa         |Yaml   |none  |     0|acc     |0.7900|±  |0.0409|
+|mathqa       |Yaml   |none  |     0|acc     |0.2295|±  |0.0077|
+|             |       |none  |     0|acc_norm|0.2218|±  |0.0076|
+|arc_easy     |Yaml   |none  |     0|acc     |0.7134|±  |0.0093|
+|             |       |none  |     0|acc_norm|0.6793|±  |0.0096|
+|arc_challenge|Yaml   |none  |     0|acc     |0.3933|±  |0.0143|
+|             |       |none  |     0|acc_norm|0.4224|±  |0.0144|
+
+==============================================
 =================0.1=================
 H2O-decay
 |    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
@@ -327,6 +363,24 @@ H2O-decay
 ==============================================
 model: huggyllama/llama-7b
 fewshot: 1
+=================0.0=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.3320|±  |0.0211|
+|             |       |none  |     1|acc_norm|0.4420|±  |0.0222|
+|winogrande   |Yaml   |none  |     1|acc     |0.5841|±  |0.0139|
+|piqa         |Yaml   |none  |     1|acc     |0.7748|±  |0.0097|
+|             |       |none  |     1|acc_norm|0.7840|±  |0.0096|
+|copa         |Yaml   |none  |     1|acc     |0.8300|±  |0.0378|
+|mathqa       |Yaml   |none  |     1|acc     |0.2415|±  |0.0078|
+|             |       |none  |     1|acc_norm|0.2345|±  |0.0078|
+|arc_easy     |Yaml   |none  |     1|acc     |0.7391|±  |0.0090|
+|             |       |none  |     1|acc_norm|0.7353|±  |0.0091|
+|arc_challenge|Yaml   |none  |     1|acc     |0.4104|±  |0.0144|
+|             |       |none  |     1|acc_norm|0.4352|±  |0.0145|
+
+==============================================
 =================0.1=================
 H2O-decay
 |    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
@@ -490,6 +544,24 @@ H2O-decay
 
 ==============================================
 fewshot: 0
+=================0.0=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     0|acc     |0.2380|±  |0.0191|
+|             |       |none  |     0|acc_norm|0.3760|±  |0.0217|
+|winogrande   |Yaml   |none  |     0|acc     |0.5841|±  |0.0139|
+|piqa         |Yaml   |none  |     0|acc     |0.7633|±  |0.0099|
+|             |       |none  |     0|acc_norm|0.7726|±  |0.0098|
+|copa         |Yaml   |none  |     0|acc     |0.7500|±  |0.0435|
+|mathqa       |Yaml   |none  |     0|acc     |0.2298|±  |0.0077|
+|             |       |none  |     0|acc_norm|0.2288|±  |0.0077|
+|arc_easy     |Yaml   |none  |     0|acc     |0.7037|±  |0.0094|
+|             |       |none  |     0|acc_norm|0.6658|±  |0.0097|
+|arc_challenge|Yaml   |none  |     0|acc     |0.3780|±  |0.0142|
+|             |       |none  |     0|acc_norm|0.4130|±  |0.0144|
+
+==============================================
 =================0.1=================
 H2O-decay
 |    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
@@ -654,6 +726,24 @@ H2O-decay
 ==============================================
 model: facebook/opt-6.7b
 fewshot: 1
+=================0.0=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.2760|±  |0.0200|
+|             |       |none  |     1|acc_norm|0.3720|±  |0.0216|
+|winogrande   |Yaml   |none  |     1|acc     |0.5549|±  |0.0140|
+|piqa         |Yaml   |none  |     1|acc     |0.7568|±  |0.0100|
+|             |       |none  |     1|acc_norm|0.7628|±  |0.0099|
+|copa         |Yaml   |none  |     1|acc     |0.8100|±  |0.0394|
+|mathqa       |Yaml   |none  |     1|acc     |0.2372|±  |0.0078|
+|             |       |none  |     1|acc_norm|0.2369|±  |0.0078|
+|arc_easy     |Yaml   |none  |     1|acc     |0.6604|±  |0.0097|
+|             |       |none  |     1|acc_norm|0.6486|±  |0.0098|
+|arc_challenge|Yaml   |none  |     1|acc     |0.3174|±  |0.0136|
+|             |       |none  |     1|acc_norm|0.3481|±  |0.0139|
+
+==============================================
 =================0.1=================
 H2O-decay
 |    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
@@ -817,6 +907,25 @@ H2O-decay
 
 ==============================================
 fewshot: 0
+=================0.0=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     0|acc     |0.2300|±  |0.0188|
+|             |       |none  |     0|acc_norm|0.3320|±  |0.0211|
+|winogrande   |Yaml   |none  |     0|acc     |0.5549|±  |0.0140|
+|piqa         |Yaml   |none  |     0|acc     |0.7437|±  |0.0102|
+|             |       |none  |     0|acc_norm|0.7519|±  |0.0101|
+|copa         |Yaml   |none  |     0|acc     |0.7000|±  |0.0461|
+|mathqa       |Yaml   |none  |     0|acc     |0.2302|±  |0.0077|
+|             |       |none  |     0|acc_norm|0.2328|±  |0.0077|
+|arc_easy     |Yaml   |none  |     0|acc     |0.6406|±  |0.0098|
+|             |       |none  |     0|acc_norm|0.5859|±  |0.0101|
+|arc_challenge|Yaml   |none  |     0|acc     |0.2986|±  |0.0134|
+|             |       |none  |     0|acc_norm|0.3387|±  |0.0138|
+
+==============================================
+
 =================0.1=================
 H2O-decay
 |    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
@@ -981,6 +1090,24 @@ H2O-decay
 ==============================================
 model: facebook/opt-2.7b
 fewshot: 1
+=================0.0=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     1|acc     |0.2580|±  |0.0196|
+|             |       |none  |     1|acc_norm|0.3480|±  |0.0213|
+|winogrande   |Yaml   |none  |     1|acc     |0.5525|±  |0.0140|
+|piqa         |Yaml   |none  |     1|acc     |0.7339|±  |0.0103|
+|             |       |none  |     1|acc_norm|0.7416|±  |0.0102|
+|copa         |Yaml   |none  |     1|acc     |0.7800|±  |0.0416|
+|mathqa       |Yaml   |none  |     1|acc     |0.2385|±  |0.0078|
+|             |       |none  |     1|acc_norm|0.2355|±  |0.0078|
+|arc_easy     |Yaml   |none  |     1|acc     |0.5997|±  |0.0101|
+|             |       |none  |     1|acc_norm|0.5753|±  |0.0101|
+|arc_challenge|Yaml   |none  |     1|acc     |0.2782|±  |0.0131|
+|             |       |none  |     1|acc_norm|0.3294|±  |0.0137|
+
+==============================================
 =================0.1=================
 H2O-decay
 |    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
@@ -1144,6 +1271,24 @@ H2O-decay
 
 ==============================================
 fewshot: 0
+=================0.0=================
+H2O-decay
+|    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|
+|-------------|-------|------|-----:|--------|-----:|---|-----:|
+|openbookqa   |Yaml   |none  |     0|acc     |0.2100|±  |0.0182|
+|             |       |none  |     0|acc_norm|0.3060|±  |0.0206|
+|winogrande   |Yaml   |none  |     0|acc     |0.5525|±  |0.0140|
+|piqa         |Yaml   |none  |     0|acc     |0.7198|±  |0.0105|
+|             |       |none  |     0|acc_norm|0.7361|±  |0.0103|
+|copa         |Yaml   |none  |     0|acc     |0.7100|±  |0.0456|
+|mathqa       |Yaml   |none  |     0|acc     |0.2268|±  |0.0077|
+|             |       |none  |     0|acc_norm|0.2248|±  |0.0076|
+|arc_easy     |Yaml   |none  |     0|acc     |0.5783|±  |0.0101|
+|             |       |none  |     0|acc_norm|0.5324|±  |0.0102|
+|arc_challenge|Yaml   |none  |     0|acc     |0.2577|±  |0.0128|
+|             |       |none  |     0|acc_norm|0.3003|±  |0.0134|
+
+==============================================
 =================0.1=================
 H2O-decay
 |    Tasks    |Version|Filter|n-shot| Metric |Value |   |Stderr|

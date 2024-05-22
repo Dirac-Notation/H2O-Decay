@@ -25,11 +25,11 @@ for j in range(len(datasets)):
         
         result = ""
         
-        result += 9*f"{text[0]}\t" + "\n"
-        result += 9*f"{text[1]}\t" + "\n"
-        result += 9*f"{text[2]}\t" + "\n"
+        result += 10*f"{text[0]}\t" + "\n"
+        result += 10*f"{text[1]}\t" + "\n"
+        result += 10*f"{text[2]}\t" + "\n"
         
-        for b in range(3, 12, 1):
+        for b in range(3, 13, 1):
             result += f"{text[b]}\t"
         result += "\n"
         

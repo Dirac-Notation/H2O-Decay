@@ -6,8 +6,8 @@ import numpy as np
 
 dir_path = os.path.dirname(__file__)
 
-# model_name = "bert-base-uncased"
-model_name = "huggyllama/llama-7b"
+model_name = "bert-base-uncased"
+# model_name = "huggyllama/llama-7b"
 
 forget = 0.1
 
@@ -64,16 +64,35 @@ for i in range(len(attentions)):
     save_path = f"{dir_path}/{model_arch}/{i}"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-        
-    for j in range(len(attentions[0][0])):
-        plt.figure(figsize=(10, 10))
-        scores = total_score[i][0][j][::-1]
+    
+    if model_arch != "bert":
+        for j in range(len(attentions[0][0])):
+            scores = total_score[i][0][j][::-1]
+            top5_indices = np.argsort(scores)[-5:]
+            
+            color = ["deepskyblue"] * len(scores)
+            for idx in top5_indices:
+                color[idx] = "salmon"
+            
+            plt.figure(figsize=(10, 10))
+            plt.barh(xlabel, scores, color=color)
+            plt.xlabel("Accumulative Attention Score", fontsize=20)
+            plt.ylabel("Sequences", fontsize=20)
+            plt.xticks(fontsize=20)
+            plt.yticks(fontsize=20)
+            plt.tight_layout()
+            
+            plt.savefig(f"{save_path}/{j}.png")
+            plt.close()
+    else:
+        scores = np.sum(total_score[i][0], axis=0)[::-1]
         top5_indices = np.argsort(scores)[-5:]
         
-        color = ["tab:blue"] * len(scores)
+        color = ["deepskyblue"] * len(scores)
         for idx in top5_indices:
-            color[idx] = "tab:red"
-        
+            color[idx] = "salmon"
+            
+        plt.figure(figsize=(10, 10))
         plt.barh(xlabel, scores, color=color)
         plt.xlabel("Accumulative Attention Score", fontsize=20)
         plt.ylabel("Sequences", fontsize=20)
@@ -81,5 +100,5 @@ for i in range(len(attentions)):
         plt.yticks(fontsize=20)
         plt.tight_layout()
         
-        plt.savefig(f"{save_path}/{j}.png")
+        plt.savefig(f"{save_path}/{i}.png")
         plt.close()

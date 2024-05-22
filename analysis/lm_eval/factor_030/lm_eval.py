@@ -18,7 +18,7 @@ str_joined = "".join(result)
 
 numbers = re.findall(r"\d+\.\d+", str_joined)
 
-num_column = 9
+num_column = 10
 num_dataset = 7
 
 grouped_list = [numbers[i:i+num_dataset] for i in range(0, len(numbers), num_dataset)]
