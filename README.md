@@ -1,3 +1,3 @@
-# LLM-Pruning
+# A2SF
 
-h2o_decay 수정 중
+Accumulative Attention Score with Forgetting Factor
