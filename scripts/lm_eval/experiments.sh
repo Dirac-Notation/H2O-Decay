@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ## LLaMA-7B
 for dataset in piqa copa openbookqa winogrande mathqa
 do

@@ -2,7 +2,7 @@ from functools import partial
 
 import os
 import transformers
-from lm_eval.base import LM
+from lm_eval.api.model import LM
 from tqdm import tqdm
 import numpy as np
 
@@ -32,8 +32,8 @@ def process_init():
 
 def process_request(x, seq):
     global tokenizer
-
-    ctx, cont = x
+    
+    ctx, cont = x.args
 #     ctx_tokens = tokenizer.encode("<|endoftext|>" + ftfy.fix_text(ctx, normalization="NFKC"))
     ctx_text = ftfy.fix_text(ctx, normalization="NFKC")
     cont_text = ftfy.fix_text(cont, normalization="NFKC")
@@ -63,10 +63,11 @@ def process_request(x, seq):
 
 
 class EvalHarnessAdaptor(LM):
-    def greedy_until(self, requests):
-        raise Exception("unimplemented")
 
     def loglikelihood_rolling(self, requests):
+        raise Exception("unimplemented")
+    
+    def generate_until(self, requests):
         raise Exception("unimplemented")
 
     def __init__(self, tpu_cluster, seq, batch, shrink, min_seq=None):
@@ -80,6 +81,10 @@ class EvalHarnessAdaptor(LM):
         self.pool = multiprocessing.Pool(processes=1, initializer=process_init)
         # self.pool = multiprocessing.Pool(initializer=process_init)
         process_init()
+
+    def __del__(self):
+        self.pool.close()
+        self.pool.join()
 
     def convert_requests(self, requests):
         return self.pool.imap(partial(process_request, seq=self.seq), requests)

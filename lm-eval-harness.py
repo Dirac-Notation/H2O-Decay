@@ -7,8 +7,8 @@ from lm_eval.tasks import initialize_tasks
 
 from utils_lm_eval.lm_model import lm_model
 
-def lm_test(lm_model: huggingface.HFLM, task_dict: dict):
-    results = evaluator.evaluate(lm_model, task_dict)
+def lm_test(lm_model: huggingface.HFLM, task_list, num_fewshot):
+    results = evaluator.evaluate(lm_model, tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation"))
 
     print(evaluator.make_table(results))
     if "groups" in results:
@@ -21,7 +21,6 @@ task_list = ["openbookqa", "winogrande", "piqa", "copa", "mathqa", "arc_easy", "
 model_list = ["meta-llama/Llama-2-7b-hf", "huggyllama/llama-7b", "facebook/opt-6.7b", "facebook/opt-2.7b"]
 fewshot_list = [1, 0]
 ratio_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8]
-
 
 for model_name in model_list:
     print(f"model: {model_name}")
@@ -36,33 +35,23 @@ for model_name in model_list:
         print(f"fewshot: {num_fewshot}")
         
         # Full Result
-        task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")
         print("Full")
-        lm_test(lm, task)
+        lm_test(lm, task_list, num_fewshot)
 
         for ratio in ratio_list:
             print(f"================={ratio}=================")
 
-            # local
-            task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")
-            lm_model(model_name=model_name, lm=lm, check_point=check_point, heavy_ratio=0.0, recent_ratio=ratio, penalty=1.0)
-            lm.model.eval().half().cuda()
-            print("Local")
-            lm_test(lm, task)
+            config = {
+                "Local": (0.0, ratio, 1.0),
+                "H2O": (ratio/2, ratio/2, 1.0),
+                "A2SF": (ratio, 0.0, 0.1)
+            }
 
-            # h2o
-            task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")
-            lm_model(model_name=model_name, lm=lm, check_point=check_point, heavy_ratio=ratio/2, recent_ratio=ratio/2, penalty=1.0)
-            lm.model.eval().half().cuda()
-            print("H2O")
-            lm_test(lm, task)
-
-            # decay
-            task = tasks.get_task_dict(task_list, num_fewshot=num_fewshot, fewshot_split="validation")
-            lm_model(model_name=model_name, lm=lm, check_point=check_point, heavy_ratio=ratio, recent_ratio=0.0, penalty=0.0)
-            lm.model.eval().half().cuda()
-            print("H2O-decay")
-            lm_test(lm, task)
+            for method, (select, local, penalty) in config.items():
+                lm_model(model_name=model_name, lm=lm, check_point=check_point, heavy_ratio=select, recent_ratio=local, penalty=penalty)
+                lm.model.eval().half().cuda()
+                print(method)
+                lm_test(lm, task_list, num_fewshot)
 
     del lm
     torch.cuda.empty_cache()

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 task=$1
 shots=$2
 

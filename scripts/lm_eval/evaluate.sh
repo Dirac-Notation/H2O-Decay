@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ## Evaluate results
 task=$1
 model=$2

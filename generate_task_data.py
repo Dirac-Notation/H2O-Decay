@@ -3,11 +3,11 @@ import json
 
 from lm_eval import evaluator, tasks
 from tasks import EvalHarnessAdaptor
+from lm_eval.tasks import initialize_tasks
 
+initialize_tasks()
 
 if __name__ == '__main__':
-    
-
     parser = argparse.ArgumentParser(
                         prog = 'ProgramName',
                         description = 'What the program does',
@@ -55,21 +55,7 @@ if __name__ == '__main__':
 
     t = DryRunner()
     adaptor = EvalHarnessAdaptor(t, seq, total_batch, shrink=pe != "fixed")
-    results = evaluator.evaluate(adaptor, tasks.get_task_dict([args.task_name
-                                                            #"lambada_openai",
-                                                            #"piqa",
-                                                            #"hellaswag",
-                                                            #"winogrande",
-                                                            #"mathqa",
-                                                            #"pubmedqa",
-                                                            # "boolq",
-                                                            # "cb",
-                                                            # "copa",
-                                                            # "multirc",
-                                                            # "record",
-                                                            # "wic",
-                                                            # "wsc",
-                                                            ]), False, args.num_fewshot, None)
+    results = evaluator.evaluate(adaptor, tasks.get_task_dict([args.task_name], num_fewshot=args.num_fewshot, fewshot_split="validation"))
     print('Finished')
 
     # dumped = json.dumps(results, indent=2)

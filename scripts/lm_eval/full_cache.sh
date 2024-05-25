@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ## Inference, and generate output json file
 task=$1
 model=$2

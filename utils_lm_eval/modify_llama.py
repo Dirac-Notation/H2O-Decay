@@ -147,8 +147,6 @@ class LlamaAttention_heavy_hitter(nn.Module):
 
         # mask_bottom = ones
         attn_weights[~mask_bottom] = torch.min(attention_mask)
-        
-        # np.save("mask_bottom.npy", mask_bottom.cpu().detach().numpy()); exit()
 
         # upcast attention to fp32
         attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
