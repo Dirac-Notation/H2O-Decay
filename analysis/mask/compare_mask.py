@@ -25,8 +25,10 @@ def compare_mask(mask1, mask2):
 for dataset in ["winogrande", "piqa", "openbookqa", "arc_e", "mathqa"]:
     
     mask_list = {
-        "local": [],
+        "ideal": [],
+        # "local": [],
         "h2o": [],
+        "a2sf_000": [],
         "a2sf_010": [],
         "a2sf_050": []
     }
@@ -35,7 +37,7 @@ for dataset in ["winogrande", "piqa", "openbookqa", "arc_e", "mathqa"]:
     for layer in range(32):
         
         dir_path = os.path.dirname(__file__)
-        attention_path = os.path.join(dir_path, dataset, "ideal", f"{layer}.npy")
+        attention_path = os.path.join(dir_path, dataset, "no_pruning", f"{layer}.npy")
 
         ideal_mask = np.load(attention_path) # 1, 32, 25, 25
         
@@ -48,6 +50,7 @@ for dataset in ["winogrande", "piqa", "openbookqa", "arc_e", "mathqa"]:
             
             mask_list[mask_name].append(compare_mask(ideal_mask, mask))
 
+    plt.figure(figsize=(7.5,6))
     for a, b in mask_list.items():
         if b != []:
             plt.plot(b, label=a)
@@ -56,5 +59,9 @@ for dataset in ["winogrande", "piqa", "openbookqa", "arc_e", "mathqa"]:
             print(f"{mean:.3f}")
 
     plt.legend()
+    plt.title("Average Cosine Similarity of Heads")
     plt.savefig(os.path.join(dir_path, dataset, "Similarity.png"))
+    plt.xlabel("Layer Number")
+    plt.ylabel("Similarity")
+    plt.tight_layout()
     plt.close()

@@ -16,6 +16,8 @@ model = AutoModelForCausalLM.from_pretrained(model_name).half().eval()
 
 check_point = None
 
+root_path = os.path.dirname(__file__)
+
 prompts = {
     "winogrande": "Dharma wanted to bake some cookies and cakes for the bake sale. She ended up only baking the cakes because she didn't have a cookie sheet.\n\nI always wonder how people prefer reading in a library instead of at the house because the lack of people at the library would make it easier to concentrate.",
     "piqa": "Question: To make pumpkin spice granola\nAnswer: With a wooden spoon, mix together 2 1/2 tsp pumpkin pie spice, 1/4 tsp salt, 1/4 cup light brown sugar, 1/3 cup canned pumpkin puree (not pumpkin pie filling) , 2 Tbsp unsweetened applesauce, 2 Tbsp honey, 1/2 tsp vanilla extract, 1/4 cup raisins, 1/4 cup craisins in a medium bowl. Mix into 3 cups rolled oats until evenly coated. Line a cookie sheet with parchment paper. Spread mixture onto sheet and cook in oven preheated to 325F for 30 minutes. Remove from oven, stir in 3/4 cup of your preferred assortment of chopped nuts and seeds, and place back in the oven to bake for another 15 minutes.\n\nQuestion: how do you cheese something?\nAnswer: sprinkle cheese all over it.",
@@ -27,12 +29,12 @@ prompts = {
 ratio = 0.2
 
 methods = {
-    "no_pruning": (0.0, 1.0, 1.0),
-    "h2o": (ratio/2, ratio/2, 1.0),
-    "local": (0.0, ratio, 1.0),
-    "ideal": (ratio, 0.0, 0.0),
-    "a2sf_010": (ratio, 0.0, 0.1),
-    "a2sf_050": (ratio, 0.0, 0.5)
+    # "no_pruning": (0.0, 1.0, 1.0),
+    # "h2o": (ratio/2, ratio/2, 1.0),
+    # "local": (0.0, ratio, 1.0),
+    "a2sf_000": (ratio, 0.0, 0.0),
+    # "a2sf_010": (ratio, 0.0, 0.1),
+    # "a2sf_050": (ratio, 0.0, 0.5),
 }
 
 for name, (i, j, k) in tqdm(methods.items()):
@@ -58,16 +60,14 @@ for name, (i, j, k) in tqdm(methods.items()):
             model.load_state_dict(check_point)
             model.half().eval().cuda()
             
-    for dataset in prompts.keys():
-        prompt_text = prompts[dataset]
-
-        input_ids = tokenizer(prompt_text, add_special_tokens=True, return_tensors='pt').input_ids.cuda()
+    for dataset, prompt in prompts.items():
+        input_ids = tokenizer(prompt, add_special_tokens=True, return_tensors='pt').input_ids.cuda()
 
         with torch.no_grad():
             result = model(input_ids, output_attentions=True)
             
-        folder_path = os.path.join(dataset, name)
+        folder_path = os.path.join(root_path, "analysis", "mask" , dataset, name)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         for i in range(len(result.attentions)):
-            np.save(f"{folder_path}/{i}.npy", result.attentions[i].cpu().detach().numpy())
+            np.save(os.path.join(folder_path, f"{i}.npy"), result.attentions[i].cpu().detach().numpy())
