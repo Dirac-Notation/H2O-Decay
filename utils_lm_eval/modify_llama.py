@@ -15,53 +15,59 @@ from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
 
 from transformers.models.llama.configuration_llama import LlamaConfig
-from transformers.models.llama.modeling_llama import LlamaRotaryEmbedding, LlamaAttention, apply_rotary_pos_emb, LlamaDecoderLayer
+from transformers.models.llama.modeling_llama import LlamaRotaryEmbedding, LlamaAttention, apply_rotary_pos_emb
 
 
 __all__ = ['convert_kvcache_llama_heavy_recent', 'LlamaAttention_heavy_hitter']
 
 
-def local_heavy_hitter_mask(attn_weights, heavy_budget, recent_budget, penalty):
+def local_heavy_hitter_mask(attn_weights, heavy_budget, recent_budget, penalty, penalty_mode):
 
     # attn_weights (BS, head, query, keys)
     dtype_attn_weights = attn_weights.dtype
     seq_length = attn_weights.shape[-1]
     
     cache_budget = heavy_budget + recent_budget
+    score_shape = attn_weights[:,:,0,:].shape
 
-    tmp_attn = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
-
-    penalty_factor = torch.arange(cache_budget,0,-1).unsqueeze(1).to(dtype_attn_weights).to(attn_weights.device) - 1
-    penalty_factor = penalty**penalty_factor
+    select_score = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
+    penalty_score = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
+    penalty_divider = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
     
-    penaltied_attn = tmp_attn[:,:,:cache_budget,:] * penalty_factor
-    accumulated_attention_score = torch.sum(penaltied_attn, dim=-2) #(head, keys)
-    accumulated_attention_score[:,:,cache_budget:] = 0
-
     mask_bottom = torch.zeros_like(attn_weights, dtype=torch.bool)
-    mask_bottom[:,:, :cache_budget, :cache_budget] = True
+    mask_bottom[:,:,0,0] = True # First Token
 
-    for token_index in range(cache_budget, seq_length):
-        local_index = token_index-recent_budget+1
+    for token_index in range(seq_length-1):
+        # Current Step Calculate
+        current_mask = mask_bottom[:,:,token_index,:]
         
-        mask_bottom_index = torch.zeros_like(accumulated_attention_score, dtype=torch.bool)
-                
-        if heavy_budget > 0:
-            _, tmp_topk_index = torch.topk(accumulated_attention_score[:,:,:local_index], k=heavy_budget, dim=-1)
-            mask_bottom_index = mask_bottom_index.scatter(-1, tmp_topk_index, True) # (head, keys)
+        tmp_attn = current_mask * attn_weights[:,:,token_index,:] + ~current_mask*torch.finfo(attn_weights.dtype).min
+        tmp_attn = torch.softmax(tmp_attn, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
         
-        mask_bottom_index[:,:,local_index:token_index] = True # recent
-        mask_bottom_index[:,:,token_index] = True # self
+        if penalty_mode: # Fixed Penalty
+            select_score = penalty*select_score + tmp_attn
+        else: # Token-wise Penalty
+            penalty_divider = torch.roll(penalty_divider, shifts=1, dims=-1)
+            penalty_divider[:,:,0] = 1/(token_index+1)
+            penalty_score += tmp_attn
+            tmp_penalty = penalty_score * penalty_divider
         
-        mask_bottom[:,:,token_index,:] = mask_bottom_index
-
-        tmp_attn_index = mask_bottom_index * attn_weights[:,:,token_index,:] + ~mask_bottom_index*torch.finfo(attn_weights.dtype).min
-        tmp_attn_index = torch.softmax(tmp_attn_index, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
-
-        accumulated_attention_score = accumulated_attention_score * penalty + tmp_attn_index
+            select_score = tmp_penalty*select_score + tmp_attn
+        
+        select_score *= current_mask
+        
+        # Next Mask Make
+        local_index = token_index - recent_budget
+        if token_index >= cache_budget:
+            if heavy_budget > 0:
+                _, tmp_topk_index = torch.topk(select_score[:,:,:local_index+1], k=heavy_budget, dim=-1)
+                mask_bottom[:,:,token_index+1,:] = mask_bottom[:,:,token_index+1,:].scatter(-1, tmp_topk_index, True) # (head, keys)
+            
+            mask_bottom[:,:,token_index+1, local_index+1:token_index+2] = True # recent
+        else:
+            mask_bottom[:,:,token_index+1, :token_index+2] = True # recent
     
     return mask_bottom
-
 
 class LlamaAttention_heavy_hitter(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
@@ -87,10 +93,8 @@ class LlamaAttention_heavy_hitter(nn.Module):
 
         self.heavy_budget_ratio = config.heavy_ratio
         self.recent_budget_ratio = config.recent_ratio
-        if config.penalty != 1.0:
-            self.penalty = config.penalty
-        else:
-            self.penalty = ((config.layer_num + 1)/config.num_hidden_layers)*config.penalty
+        self.penalty = config.penalty
+        self.penalty_mode = config.penalty_mode
 
     def _shape(self, tensor: torch.Tensor, seq_len: int, bsz: int):
         return tensor.view(bsz, seq_len, self.num_heads, self.head_dim).transpose(1, 2).contiguous()
@@ -105,7 +109,7 @@ class LlamaAttention_heavy_hitter(nn.Module):
         use_cache: bool = False,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
         bsz, q_len, _ = hidden_states.size()
-
+            
         query_states = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
         key_states = self.k_proj(hidden_states).view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
         value_states = self.v_proj(hidden_states).view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
@@ -143,9 +147,15 @@ class LlamaAttention_heavy_hitter(nn.Module):
         ### Heavy + Recent
         heavy_budget = int(self.heavy_budget_ratio * attn_weights.shape[-1])
         recent_budget = int(self.recent_budget_ratio * attn_weights.shape[-1])
-
+        
         # Heavy Hitter Mask
-        mask_bottom = local_heavy_hitter_mask(attn_weights, heavy_budget, recent_budget, self.penalty) # Default: No padding applied to input
+        mask_bottom = local_heavy_hitter_mask(
+            attn_weights=attn_weights,
+            heavy_budget=heavy_budget,
+            recent_budget=recent_budget,
+            penalty=self.penalty,
+            penalty_mode=self.penalty_mode
+        ) # Default: No padding applied to input
         
         attn_weights[~mask_bottom] = torch.min(attention_mask)
 
@@ -171,10 +181,9 @@ class LlamaAttention_heavy_hitter(nn.Module):
 
 
 def convert_kvcache_llama_heavy_recent(model, config):
+
     for name, module in reversed(model._modules.items()):
-        if isinstance(module, LlamaDecoderLayer):
-            config.layer_num = int(name)
-        
+
         if len(list(module.children())) > 0:
             model._modules[name] = convert_kvcache_llama_heavy_recent(module, config)
 

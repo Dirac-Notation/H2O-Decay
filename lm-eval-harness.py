@@ -33,36 +33,48 @@ if __name__ == "__main__":
 
     initialize_tasks()
 
-    for model_name in model_list:
-        # Load the model
-        lm = huggingface.HFLM(model_name, batch_size="auto", device="cpu")
+    for num_fewshot in fewshot_list:
+        print(f"fewshot: {num_fewshot}")
         
-        check_point = copy.deepcopy(lm.model.state_dict())
-        import pdb; pdb.set_trace()
-        lm.model.cuda()
-
-        print(f"model: {model_name}")
-        for num_fewshot in fewshot_list:
-            print(f"fewshot: {num_fewshot}")
+        for model_name in model_list:
             
-            print("Full")
-            lm_test(lm, task_list, num_fewshot)
+            lm = huggingface.HFLM(model_name, batch_size="auto")
+            
+            lm.model.cpu()
+            check_point = copy.deepcopy(lm.model.state_dict())
+            lm.model.cuda()
+
+            print(f"model: {model_name}")
+            
+            # print("Full")
+            # lm_test(lm, task_list, num_fewshot)
 
             for ratio in ratio_list:
                 print(f"================={ratio}=================")
 
                 config = {
-                    "Local": (0.0, ratio, 1.0),
-                    "H2O": (ratio/2, ratio/2, 1.0),
-                    "A2SF": (ratio, 0.0, 0.5)
+                    # "Local": (0.0, ratio, 1.0, True),
+                    # "H2O": (ratio/2, ratio/2, 1.0, True),
+                    # "A2SF_ZERO": (ratio, 0.00, 0.1, True),
+                    # "A2SF_RECENT": (ratio-0.05, 0.05, 0.1, True),
+                    # "A2SF_TW_ZERO": (ratio, 0.00, 0.1, False),
+                    # "A2SF_TW_RECENT": (ratio-0.05, 0.05, 0.1, False),
+                    "NOHIS_ZERO": (ratio, 0.00, 0.0, True),
+                    "NOHIS_RECENT": (ratio-0.05, 0.05, 0.0, True),
                 }
 
-                for method, (select, local, penalty) in config.items():
-                    lm_model(model_name=model_name, lm=lm, check_point=check_point, heavy_ratio=select, recent_ratio=local, penalty=penalty)
-                    lm.model.eval().half().cuda()
+                for method, (select, local, penalty, penalty_mode) in config.items():
+                    lm_model(
+                        model_name=model_name,
+                        lm=lm,
+                        check_point=check_point,
+                        device="cuda",
+                        heavy_ratio=select,
+                        recent_ratio=local,
+                        penalty=penalty,
+                        penalty_mode=penalty_mode
+                    )
                     print(method)
                     lm_test(lm, task_list, num_fewshot)
-
-        lm.model.cpu()
-        del lm
-        torch.cuda.empty_cache()
+            
+            lm.model.cpu()

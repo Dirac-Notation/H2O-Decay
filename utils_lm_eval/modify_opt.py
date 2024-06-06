@@ -18,71 +18,52 @@ from transformers.models.opt.modeling_opt import OPTAttention
 
 __all__ = ['convert_kvcache_opt_heavy_recent', 'OPTAttention_Mask']
 
-
-
-def local_heavy_hitter_mask(attn_weights, heavy_budget, penalty):
+def local_heavy_hitter_mask(attn_weights, heavy_budget, recent_budget, penalty, value=None):
 
     # attn_weights (head, query, keys)
     dtype_attn_weights = attn_weights.dtype
     seq_length = attn_weights.shape[-1]
 
+    cache_budget = heavy_budget + recent_budget
+
     tmp_attn = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
 
-    penalty_factor = torch.arange(heavy_budget,0,-1).unsqueeze(1).to(dtype_attn_weights).to(attn_weights.device) - 1
+    penalty_factor = torch.arange(cache_budget,0,-1).unsqueeze(1).to(dtype_attn_weights).to(attn_weights.device) - 1
     penalty_factor = penalty**penalty_factor
 
-    penaltied_attn = tmp_attn[:,:heavy_budget,:] * penalty_factor
+    penaltied_attn = tmp_attn[:,:cache_budget,:] * penalty_factor
     accumulated_attention_score = torch.sum(penaltied_attn, dim=-2) #(head, keys)
-    accumulated_attention_score[:,heavy_budget:] = 0
+    accumulated_attention_score[:,cache_budget:] = 0
 
     mask_bottom = torch.zeros_like(attn_weights, dtype=torch.bool)
-    mask_bottom[:, :heavy_budget, :heavy_budget] = True
+    mask_bottom[:, :cache_budget, :cache_budget] = True
 
-    for token_index in range(heavy_budget, seq_length):
-        tmp_attn_index = tmp_attn[:,token_index,:]
+    for token_index in range(cache_budget, seq_length):
+        local_index = token_index-recent_budget
         
-        _, tmp_topk_index = accumulated_attention_score.topk(k=heavy_budget-1, dim=-1)
+        mask_bottom_index = torch.zeros_like(accumulated_attention_score, dtype=torch.bool)
         
-        zeros_index = torch.zeros_like(tmp_attn_index, dtype=torch.bool)
-        mask_bottom_index = zeros_index.scatter(-1, tmp_topk_index, True) #(head, keys)
-        mask_bottom_index[:, token_index] = True
-
+        if heavy_budget > 0:
+            accumulated_attention_score[:,:local_index] = mask_bottom[:,token_index-1,:local_index]*accumulated_attention_score[:,:local_index]
+            if value is not None:
+                accumulated_attention_score_value = accumulated_attention_score * torch.mean(torch.abs(value), dim=-1)
+                _, tmp_topk_index = torch.topk(accumulated_attention_score_value[:,:local_index], k=heavy_budget, dim=-1)
+            else:
+                _, tmp_topk_index = torch.topk(accumulated_attention_score[:,:local_index], k=heavy_budget, dim=-1)
+            mask_bottom_index = mask_bottom_index.scatter(-1, tmp_topk_index, True) # (head, keys)
+        
+        mask_bottom_index[:,local_index:] = True # recent
+        
         mask_bottom[:,token_index,:] = mask_bottom_index
+
+        tmp_attn_index = mask_bottom_index * attn_weights[:,token_index,:] + ~mask_bottom_index*torch.finfo(attn_weights.dtype).min
+        tmp_attn_index = torch.softmax(tmp_attn_index, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
+
         accumulated_attention_score = accumulated_attention_score * penalty + tmp_attn_index
-        accumulated_attention_score = accumulated_attention_score * mask_bottom_index
-        
-        # # idle
-        # tmp_attn_index = tmp_attn[:,token_index,:]
-        
-        # accumulated_attention_score = tmp_attn_index
-        
-        # _, tmp_topk_index = accumulated_attention_score.topk(k=heavy_budget-1, dim=-1)
-        
-        # zeros_index = torch.zeros_like(tmp_attn_index, dtype=torch.bool)
-        # mask_bottom_index = zeros_index.scatter(-1, tmp_topk_index, True) #(head, keys)
-        # mask_bottom_index[:, token_index] = True
 
-        # mask_bottom[:,token_index,:] = mask_bottom_index
-
-    mask_bottom = torch.tril(mask_bottom, diagonal=0)
+    mask_bottom = torch.tril(mask_bottom)
 
     return mask_bottom
-
-
-def sanity_check(mask):
-    # mask (head, query, key)
-    ones = torch.ones_like(mask)
-    ones = torch.triu(ones, diagonal=0)
-    mask_bottom = torch.logical_or(mask, ones)
-
-    error_cnt = 0
-    for i in range(mask_bottom.shape[1]-1):
-        index = mask_bottom[:,i,:].eq(0).unsqueeze(1)
-        index[:,i:]=0
-        error_cnt += (mask_bottom[:,i:,:] * index).sum().item()
-    print(error_cnt)
-    return error_cnt
-
 
 class OPTAttention_Mask(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
@@ -97,6 +78,7 @@ class OPTAttention_Mask(nn.Module):
         is_decoder: bool = False,
         bias: bool = True,
         penalty: float = 1.0,
+        value_mode: bool = False
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -120,6 +102,7 @@ class OPTAttention_Mask(nn.Module):
         self.heavy_budget_ratio = heavy_ratio
         self.recent_budget_ratio = recent_ratio
         self.penalty = penalty
+        self.value_mode = value_mode
 
     def _shape(self, tensor: torch.Tensor, seq_len: int, bsz: int):
         return tensor.view(bsz, seq_len, self.num_heads, self.head_dim).transpose(1, 2).contiguous()
@@ -201,19 +184,14 @@ class OPTAttention_Mask(nn.Module):
         recent_budget = int(self.recent_budget_ratio * attn_weights.shape[-1])
 
         # Heavy Hitter Mask
-        if heavy_budget > 0:
-            mask_bottom = local_heavy_hitter_mask(attn_weights, heavy_budget, self.penalty) # Default: No padding applied to input
-        else:
-            mask_bottom = torch.zeros_like(attn_weights, dtype=torch.bool)
+        mask_bottom = local_heavy_hitter_mask(
+            attn_weights=attn_weights,
+            heavy_budget=heavy_budget,
+            recent_budget=recent_budget,
+            penalty=self.penalty,
+            value=value_states if self.value_mode else None
+        ) # Default: No padding applied to input
 
-        # Recent Mask
-        ones = torch.ones_like(attn_weights, dtype=torch.bool)
-        ones = torch.triu(ones, diagonal=-recent_budget)
-        mask_bottom = torch.logical_or(mask_bottom, ones)
-
-        # Combine h2o+recent and apply casual mask
-        mask_bottom = torch.tril(mask_bottom, diagonal=0)
-        # mask_bottom = ones
         attn_weights[~mask_bottom] = torch.min(attention_mask)
 
 
@@ -280,6 +258,7 @@ def convert_kvcache_opt_heavy_recent(model, config):
                 dropout=config.attention_dropout,
                 is_decoder=True,
                 bias=config.enable_bias,
-                penalty=config.penalty
+                penalty=config.penalty,
+                value_mode=config.value_mode
             )
     return model

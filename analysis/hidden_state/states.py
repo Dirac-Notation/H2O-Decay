@@ -1,22 +1,24 @@
-import copy
-import torch
 import os
 import numpy as np
 
-from utils_lm_eval.modify_llama import convert_kvcache_llama_heavy_recent
-from tqdm import tqdm
+from transformers import AutoTokenizer
 
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
+import torch
 
-model_name = "meta-llama/Llama-2-7b-hf"
+def cosine_similarity(A, B):
+    scale = 100
 
-config = AutoConfig.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
-model = AutoModelForCausalLM.from_pretrained(model_name).half().eval()
+    dot_product = np.dot(A, B)
+    
+    norm_A = np.linalg.norm(A/scale)*scale
+    norm_B = np.linalg.norm(B/scale)*scale
+    
+    similarity = dot_product / (norm_A * norm_B)
 
-check_point = None
+    return similarity
 
-root_path = os.path.dirname(__file__)
+
+dir_path = os.path.dirname(__file__)
 
 prompts = {
     "winogrande": "Dharma wanted to bake some cookies and cakes for the bake sale. She ended up only baking the cakes because she didn't have a cookie sheet.\n\nI always wonder how people prefer reading in a library instead of at the house because the lack of people at the library would make it easier to concentrate.",
@@ -26,50 +28,29 @@ prompts = {
     # "mathqa": "Question: at company x , senior sales representatives visit the home office once every 15 days , and junior sales representatives visit the home office once every 10 days . the number of visits that a junior sales representative makes in a 2 - year period is approximately what percent greater than the number of visits that a senior representative makes in the same period ?\nAnswer: 50 %\n\nQuestion: a circle graph shows how the budget of a certain company was spent : 61 percent for salaries , 10 percent for research and development , 6 percent for utilities , 5 percent for equipment , 3 percent for supplies , and the remainder for transportation . if the area of each sector of the graph is proportional to the percent of the budget it represents , how many degrees of the circle are used to represent transportation ?\nAnswer:"
 }
 
-ratio = 0.2
+model_name = "meta-llama/Llama-2-7b-hf"
+tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
 
-methods = {
-    # "no_pruning": (0.0, 1.0, 1.0, True),
-    # "h2o": (ratio/2, ratio/2, 1.0, True),
-    # "A2SF_ZERO": (ratio, 0.00, 0.1, True),
-    # "A2SF_RECENT": (ratio-0.05, 0.05, 0.1, True),
-    # "A2SF_TW_ZERO": (ratio, 0.00, 0.1, False),
-    # "A2SF_TW_RECENT": (ratio-0.05, 0.05, 0.1, False),
-    # "NOHIS_ZERO": (ratio, 0.00, 0.0, True),
-    "NOHIS_RECENT": (ratio-0.05, 0.05, 0.0, True),
-}
+dataset = "winogrande"
 
-for name, (i, j, k, h) in tqdm(methods.items()):
-    config.heavy_ratio = i
-    config.recent_ratio = j
-    config.penalty = k
-    config.penalty_mode = h
+prompt = prompts[dataset]
 
-    if (i + j < 1.0):
-        if check_point is None:
-            model.cpu()
-            check_point = copy.deepcopy(model.state_dict())
-        
-        convert_kvcache_llama_heavy_recent(model, config)
-        model.load_state_dict(check_point)
-        torch.cuda.empty_cache()
-        model.half().eval().cuda()
-    else:
-        if check_point is None:
-            model.cuda()
-        else:
-            config = AutoConfig.from_pretrained(model_name)
-            model = AutoModelForCausalLM.from_config(config)
-            model.half().eval().cuda()
-            
-    for dataset, prompt in prompts.items():
-        input_ids = tokenizer(prompt, add_special_tokens=True, return_tensors='pt').input_ids.cuda()
+input_ids = tokenizer(prompt, add_special_tokens=True, return_tensors='pt').input_ids
+tokens = tokenizer.tokenize(prompt)
 
-        with torch.no_grad():
-            result = model(input_ids, output_attentions=True)
-            
-        folder_path = os.path.join(root_path, "analysis", "mask", "npy", dataset, name)
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-        for i in range(len(result.attentions)):
-            np.save(os.path.join(folder_path, f"{i}.npy"), result.attentions[i].cpu().detach().numpy())
+# for i, token in enumerate(tokens):
+#     print(f"{i} : {token}")
+
+for i in range(32):
+    tmp_path = os.path.join(dir_path, "npy", dataset, "no_pruning", f"{i}.npy")
+
+    state = np.load(tmp_path)
+    
+    print(i)
+    a, b, c = 0, 9, 10
+    print(state[0,a])
+    print(state[0,b])
+    print(state[0,c])
+    print(f"{tokens[a]} - {tokens[b]} : {cosine_similarity(state[0,a], state[0,b])}")
+    print(f"{tokens[b]} - {tokens[c]} : {cosine_similarity(state[0,b], state[0,c])}")
+    print(f"{tokens[c]} - {tokens[a]} : {cosine_similarity(state[0,c], state[0,a])}")

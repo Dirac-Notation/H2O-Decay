@@ -17,18 +17,22 @@ ENABLE_Heavy_Hitter_FUNCTIONS = {
 def lm_model(model_name: str,
              lm: HFLM=None,
              check_point=None,
+             device="cpu",
              heavy_ratio: float = 0.1,
              recent_ratio: float = 0.1,
              penalty: float = 1.0,
+             penalty_mode: bool=True
             ):
     config = AutoConfig.from_pretrained(model_name)
     config.heavy_ratio = heavy_ratio
     config.recent_ratio = recent_ratio
     config.penalty = penalty
+    config.penalty_mode = penalty_mode
 
     lm.model.cpu()
 
     ENABLE_Heavy_Hitter_FUNCTIONS[config.architectures[0]](lm.model, config=config)
 
-    torch.cuda.empty_cache()
     lm.model.load_state_dict(check_point)
+    
+    lm.model.eval().half().to(device)
