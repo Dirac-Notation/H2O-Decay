@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from transformers import AutoTokenizer
-from tqdm import tqdm
 
 import torch
 
@@ -28,44 +27,21 @@ prompt = prompts[dataset]
 input_ids = tokenizer(prompt, add_special_tokens=True, return_tensors='pt').input_ids
 tokens = tokenizer.tokenize(prompt)
 
-for i in tqdm(range(32)):
-    for t in ["key", "value"]:
-
-        state = np.load(os.path.join(dir_path, "npy", dataset, "no_pruning", t, f"{i}.npy"))
+with open(os.path.join(dir_path, "result.txt"), "w") as file:
+    for i in range(32):
         
-        folder_path = os.path.join(dir_path, "graph", str(i))
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+        state = np.load(os.path.join(dir_path, "npy", dataset, "no_pruning", f"{i}.npy"))
         
-        norm = np.linalg.norm(state, axis=(0,3))
+        norm = state[0,:,-1,:]
         
-        plt.figure(figsize=(24, 12))
+        print(f"========== Layer {i} ==========", file=file)
         for idx, vec in enumerate(norm):
-            plt.subplot(4, 8, idx+1)
-            plt.title(f"Head_{idx}")
-            plt.bar(range(vec.shape[0]), vec, align="center", width=1.0)
-            plt.xlabel("Token Index")
-            plt.ylabel(f"{t} Norm")
-                       
-        plt.tight_layout()
-        plt.savefig(os.path.join(folder_path, f"{dataset}_{t}.png"))
-        plt.close()
-
-# with open(os.path.join(dir_path, "result.txt"), "w") as file:
-#     for i in range(32):
-        
-#         state = np.load(os.path.join(dir_path, "npy", dataset, "no_pruning", "value", f"{i}.npy"))
-        
-#         norm = np.linalg.norm(state, axis=(0,3))
-        
-#         print(f"========== Layer {i} ==========", file=file)
-#         for idx, vec in enumerate(norm):
-#             indices_desc = np.argsort(vec)[::-1][:5]
+            indices_desc = np.argsort(vec)[::-1][:5]
             
-#             print(f"Head_{idx} : ", end="", file=file)
-#             for index in indices_desc:
-#                 if index != 0:
-#                     print(tokens[index-1], end=" / ", file=file)
-#                 else:
-#                     print("<sos>", end=" / ", file=file)
-#             print(file=file)
+            print(f"Head_{idx} : ", end="", file=file)
+            for index in indices_desc:
+                if index != 0:
+                    print(tokens[index-1], end=" / ", file=file)
+                else:
+                    print("<sos>", end=" / ", file=file)
+            print(file=file)

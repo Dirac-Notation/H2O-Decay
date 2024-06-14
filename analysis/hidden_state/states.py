@@ -40,17 +40,21 @@ tokens = tokenizer.tokenize(prompt)
 
 # for i, token in enumerate(tokens):
 #     print(f"{i} : {token}")
+states = []
 
 for i in range(32):
     tmp_path = os.path.join(dir_path, "npy", dataset, "no_pruning", f"{i}.npy")
 
     state = np.load(tmp_path)
-    
-    print(i)
-    a, b, c = 0, 9, 10
-    print(state[0,a])
-    print(state[0,b])
-    print(state[0,c])
-    print(f"{tokens[a]} - {tokens[b]} : {cosine_similarity(state[0,a], state[0,b])}")
-    print(f"{tokens[b]} - {tokens[c]} : {cosine_similarity(state[0,b], state[0,c])}")
-    print(f"{tokens[c]} - {tokens[a]} : {cosine_similarity(state[0,c], state[0,a])}")
+    states.append(state)
+
+    # print(i)
+    # a, b, c = 0, 9, 10
+    # print(state[0,a])
+    # print(state[0,b])
+    # print(state[0,c])
+    # print(f"{tokens[a]} - {tokens[b]} : {cosine_similarity(state[0,a], state[0,b])}")
+    # print(f"{tokens[b]} - {tokens[c]} : {cosine_similarity(state[0,b], state[0,c])}")
+    # print(f"{tokens[c]} - {tokens[a]} : {cosine_similarity(state[0,c], state[0,a])}")
+
+import pdb; pdb.set_trace()

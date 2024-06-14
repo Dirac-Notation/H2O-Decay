@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 dir_path = os.path.dirname(__file__)
 
-source_list = ["no_pruning", "h2o", "ideal", "A2SF_ZERO", "A2SF_TW_ZERO", "NOHIS_ZERO", "A2SF_RECENT", "A2SF_TW_RECENT", "NOHIS_RECENT"]
+source_list = ["no_pruning", "h2o", "IDEAL", "IDEAL_VALUE", "A2SF_ZERO", "A2SF_TENDANCY_RECENT", "NOHIS_ZERO"]
 
 row = 3
 column = math.ceil(len(source_list)/3)

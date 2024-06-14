@@ -33,39 +33,21 @@ for i in tqdm(range(32)):
 
         state = np.load(os.path.join(dir_path, "npy", dataset, "no_pruning", t, f"{i}.npy"))
         
-        folder_path = os.path.join(dir_path, "graph", str(i))
+        folder_path = os.path.join(dir_path, "dimension", str(i))
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         
-        norm = np.linalg.norm(state, axis=(0,3))
+        state_shape = state.shape
         
-        plt.figure(figsize=(24, 12))
-        for idx, vec in enumerate(norm):
-            plt.subplot(4, 8, idx+1)
-            plt.title(f"Head_{idx}")
-            plt.bar(range(vec.shape[0]), vec, align="center", width=1.0)
-            plt.xlabel("Token Index")
-            plt.ylabel(f"{t} Norm")
-                       
-        plt.tight_layout()
-        plt.savefig(os.path.join(folder_path, f"{dataset}_{t}.png"))
+        x = np.arange(0, state_shape[-1])
+        y = np.arange(0, state_shape[-2])
+        x, y = np.meshgrid(x, y)
+        z = state[0,0]
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+        ax.plot_surface(x, y, z)
+        
+        plt.savefig(os.path.join(folder_path, "asdf.png"))
         plt.close()
-
-# with open(os.path.join(dir_path, "result.txt"), "w") as file:
-#     for i in range(32):
         
-#         state = np.load(os.path.join(dir_path, "npy", dataset, "no_pruning", "value", f"{i}.npy"))
-        
-#         norm = np.linalg.norm(state, axis=(0,3))
-        
-#         print(f"========== Layer {i} ==========", file=file)
-#         for idx, vec in enumerate(norm):
-#             indices_desc = np.argsort(vec)[::-1][:5]
-            
-#             print(f"Head_{idx} : ", end="", file=file)
-#             for index in indices_desc:
-#                 if index != 0:
-#                     print(tokens[index-1], end=" / ", file=file)
-#                 else:
-#                     print("<sos>", end=" / ", file=file)
-#             print(file=file)

@@ -15,21 +15,27 @@ models = [
 cache_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8]
 
 methods = [
-    "LOCAL",
+    "IDEAL",
+    "IDEAL_VALUE",
+    "LOCAL",#
     "H2O",
     "A2SF_ZERO",
-    "A2SF_RECENT",
-    "A2SF_TW_ZERO",
-    "A2SF_TW_RECENT",
+    "A2SF_RECENT",#
+    "A2SF_TW_ZERO",#
+    "A2SF_TW_RECENT",#
     "NOHIS_ZERO",
-    "NOHIS_RECENT"
+    "NOHIS_RECENT",#
+    "A2SF_TENDANCY_ZERO",#
+    "A2SF_TENDANCY_RECENT"
 ]
 
 except_method = [
     "LOCAL",
     "A2SF_RECENT",
+    "A2SF_TW_ZERO",
     "A2SF_TW_RECENT",
-    "NOHIS_RECENT"
+    "NOHIS_RECENT",
+    "A2SF_TENDANCY_ZERO",
 ]
 
 datasets = [
@@ -96,7 +102,7 @@ for fewshot in fewshots:
             for method in [i for i in methods if i not in except_method]:
                 plt.plot(cache_ratios, result_dict[fewshot][model][dataset][method], label=method, marker="o", markersize=5)
                 
-            plt.legend(loc="lower left", fontsize=13)
+            # plt.legend(loc="lower left", fontsize=13)
             plt.xticks(fontsize=13)
             plt.yticks(fontsize=13)
             plt.xlabel("Cache Ratio", fontsize=13)
@@ -104,6 +110,16 @@ for fewshot in fewshots:
             plt.tight_layout()
             
             idx += 1
+        
+        plt.subplot(2, 3, idx)
+        plt.plot(0, 0, linestyle="dashed", label="FULL")
+        for method in [i for i in methods if i not in except_method]:
+            plt.plot(0, 0, label=method, marker="o", markersize=5)
+        plt.legend(loc="center", fontsize=13, framealpha=1.0)
+        plt.xticks([])
+        plt.yticks([])
+        for side in ["top", "bottom", "left", "right"]:
+            plt.gca().spines[side].set_visible(False)
         
         plt.savefig(os.path.join(folder_path, f"{fewshot}_{model}.png"))
         plt.close()
