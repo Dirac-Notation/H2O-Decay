@@ -21,55 +21,84 @@ from transformers.models.llama.modeling_llama import LlamaRotaryEmbedding, Llama
 __all__ = ['convert_kvcache_llama_heavy_recent', 'LlamaAttention_heavy_hitter']
 
 
-def local_heavy_hitter_mask(attn_weights, heavy_budget, recent_budget, penalty, penalty_mode):
+def low_dimension_attention(query_states, key_states, head_dim, heavy_budget, recent_budget, penalty, penalty_mode):
 
     # attn_weights (BS, head, query, keys)
-    dtype_attn_weights = attn_weights.dtype
-    seq_length = attn_weights.shape[-1]
+    dtype_attn_weights = query_states.dtype
+    seq_length = query_states.shape[-2]
+    state_dimension = query_states.shape[-1]
+    small_dimension = None
+    attn_shape = (query_states.shape[0], query_states.shape[1], seq_length, seq_length)
     
     cache_budget = heavy_budget + recent_budget
-    score_shape = attn_weights[:,:,0,:].shape
-
-    select_score = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
-    penalty_score = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
-    penalty_divider = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
     
-    mask_bottom = torch.zeros_like(attn_weights, dtype=torch.bool)
-    mask_bottom[:,:,0,0] = True # First Token
+    result_attnetion = torch.zeros(attn_shape, dtype=torch.float, device=query_states.device)
 
-    score_cache_index = 0
-    score_cache_budget = 3
-    score_cache = torch.zeros_like(attn_weights[:,:,:score_cache_budget,:], dtype=torch.float, device=attn_weights.device)
-
-    for token_index in range(seq_length-1):
-        # Current Step Calculate
-        current_mask = mask_bottom[:,:,token_index,:]
-        
-        tmp_attn = current_mask * attn_weights[:,:,token_index,:] + ~current_mask*torch.finfo(attn_weights.dtype).min
-        tmp_attn = torch.softmax(tmp_attn, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
-        
-        if penalty_mode: # Fixed Penalty
-            select_score = penalty*select_score + tmp_attn
-        else: # Token-wise Penalty
-            score_cache[:,:,score_cache_index,:] = tmp_attn
-            score_cache_index = (score_cache_index + 1) % score_cache_budget
-            
-            select_score = torch.mean(score_cache, dim=-2)
-        
-        select_score *= current_mask
-        
-        # Next Mask Make
-        local_index = token_index - recent_budget
-        if token_index >= cache_budget:
-            if heavy_budget > 0:
-                _, tmp_topk_index = torch.topk(select_score[:,:,:local_index+1], k=heavy_budget, dim=-1)
-                mask_bottom[:,:,token_index+1,:] = mask_bottom[:,:,token_index+1,:].scatter(-1, tmp_topk_index, True) # (head, keys)
-            
-            mask_bottom[:,:,token_index+1, local_index+1:token_index+2] = True # recent
+    for token_index in range(seq_length):
+        query = query_states[token_index]
+        keys = key_states[:token_index]
+        if token_index <= cache_budget:
+            tmp_attn = torch.softmax(torch.matmul(query, keys.transpose(2,3))/math.sqrt(head_dim))
+            result_attnetion[:,:,token_index,:token_index] = tmp_attn
         else:
-            mask_bottom[:,:,token_index+1, :token_index+2] = True # recent
+            if small_dimension is None:
+                _, small_dimension = result_attnetion[:,:,:token_index-1,:token_index-1].abs().mean(dim=-2).topk(seq_length-6, largest=False, dim=-1)
+            history = result_attnetion[:,:,token_index-1,:]
+            _, necessary_tokens = history[:,:,token_index-1-recent_budget].topk(heavy_budget, dim=-1)
+            
+            for key_index in necessary_tokens:
+            
+    return 
+
+# def local_heavy_hitter_mask(attn_weights, heavy_budget, recent_budget, penalty, penalty_mode):
+
+#     # attn_weights (BS, head, query, keys)
+#     dtype_attn_weights = attn_weights.dtype
+#     seq_length = attn_weights.shape[-1]
     
-    return mask_bottom
+#     cache_budget = heavy_budget + recent_budget
+#     score_shape = attn_weights[:,:,0,:].shape
+
+#     select_score = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
+#     penalty_score = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
+#     penalty_divider = torch.zeros(score_shape, dtype=torch.float, device=attn_weights.device)
+    
+#     mask_bottom = torch.zeros_like(attn_weights, dtype=torch.bool)
+#     mask_bottom[:,:,0,0] = True # First Token
+
+#     score_cache_index = 0
+#     score_cache_budget = 3
+#     score_cache = torch.zeros_like(attn_weights[:,:,:score_cache_budget,:], dtype=torch.float, device=attn_weights.device)
+
+#     for token_index in range(seq_length-1):
+#         # Current Step Calculate
+#         current_mask = mask_bottom[:,:,token_index,:]
+        
+#         tmp_attn = current_mask * attn_weights[:,:,token_index,:] + ~current_mask*torch.finfo(attn_weights.dtype).min
+#         tmp_attn = torch.softmax(tmp_attn, dim=-1, dtype=torch.float32).to(dtype_attn_weights)
+        
+#         if penalty_mode: # Fixed Penalty
+#             select_score = penalty*select_score + tmp_attn
+#         else: # Token-wise Penalty
+#             score_cache[:,:,score_cache_index,:] = tmp_attn
+#             score_cache_index = (score_cache_index + 1) % score_cache_budget
+            
+#             select_score = torch.mean(score_cache, dim=-2)
+        
+#         select_score *= current_mask
+        
+#         # Next Mask Make
+#         local_index = token_index - recent_budget
+#         if token_index >= cache_budget:
+#             if heavy_budget > 0:
+#                 _, tmp_topk_index = torch.topk(select_score[:,:,:local_index+1], k=heavy_budget, dim=-1)
+#                 mask_bottom[:,:,token_index+1,:] = mask_bottom[:,:,token_index+1,:].scatter(-1, tmp_topk_index, True) # (head, keys)
+            
+#             mask_bottom[:,:,token_index+1, local_index+1:token_index+2] = True # recent
+#         else:
+#             mask_bottom[:,:,token_index+1, :token_index+2] = True # recent
+    
+#     return mask_bottom
 
 class LlamaAttention_heavy_hitter(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
@@ -110,6 +139,11 @@ class LlamaAttention_heavy_hitter(nn.Module):
         output_attentions: bool = False,
         use_cache: bool = False,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
+        
+        ### Heavy + Recent
+        heavy_budget = int(self.heavy_budget_ratio * attn_weights.shape[-1])
+        recent_budget = int(self.recent_budget_ratio * attn_weights.shape[-1])
+
         bsz, q_len, _ = hidden_states.size()
             
         query_states = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
@@ -145,24 +179,20 @@ class LlamaAttention_heavy_hitter(nn.Module):
                 )
             attn_weights = attn_weights + attention_mask
             attn_weights = torch.max(attn_weights, torch.tensor(torch.finfo(attn_weights.dtype).min))
-
-        ### Heavy + Recent
-        heavy_budget = int(self.heavy_budget_ratio * attn_weights.shape[-1])
-        recent_budget = int(self.recent_budget_ratio * attn_weights.shape[-1])
         
-        # Heavy Hitter Mask
-        mask_bottom = local_heavy_hitter_mask(
-            attn_weights=attn_weights,
-            heavy_budget=heavy_budget,
-            recent_budget=recent_budget,
-            penalty=self.penalty,
-            penalty_mode=self.penalty_mode
-        ) # Default: No padding applied to input
+        # # Heavy Hitter Mask
+        # mask_bottom = local_heavy_hitter_mask(
+        #     attn_weights=attn_weights,
+        #     heavy_budget=heavy_budget,
+        #     recent_budget=recent_budget,
+        #     penalty=self.penalty,
+        #     penalty_mode=self.penalty_mode
+        # ) # Default: No padding applied to input
         
-        attn_weights[~mask_bottom] = torch.min(attention_mask)
+        # attn_weights[~mask_bottom] = torch.min(attention_mask)
 
-        # upcast attention to fp32
-        attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
+        # # upcast attention to fp32
+        # attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
         attn_output = torch.matmul(attn_weights, value_states)
 
         if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):

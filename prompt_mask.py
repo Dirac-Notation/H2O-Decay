@@ -34,13 +34,14 @@ methods = {
     # "h2o": (ratio/2, ratio/2, 1.0, True, False),
     # "A2SF_ZERO": (ratio, 0.00, 0.1, True, False),
     # "A2SF_RECENT": (ratio-0.05, 0.05, 0.1, True, False),
-    "A2SF_TENDANCY_ZERO": (ratio, 0.00, 0.1, False, False),
-    "A2SF_TENDANCY_RECENT": (ratio-0.05, 0.05, 0.1, False, False),
+    # "A2SF_TENDANCY_ZERO": (ratio, 0.00, 0.1, False, False),
+    # "A2SF_TENDANCY_RECENT": (ratio-0.05, 0.05, 0.1, False, False),
     # "A2SF_TW_RECENT": (ratio-0.05, 0.05, 0.1, False, False),
     # "NOHIS_ZERO": (ratio, 0.00, 0.0, True, False),
     # "NOHIS_RECENT": (ratio-0.05, 0.05, 0.0, True, False),
     # "IDEAL": (ratio, 0.0, 1.0, True, True),
-    # "IDEAL_VALUE": (ratio, 0.0, 1.0, False, True)
+    # "IDEAL_VALUE": (ratio, 0.0, 1.0, False, True),
+    "low_dimension": (0.0, 1.0, 1.0, True, False),
 }
 
 for name, (i, j, k, h, l) in tqdm(methods.items()):

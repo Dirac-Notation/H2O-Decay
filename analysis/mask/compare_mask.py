@@ -25,6 +25,7 @@ def compare_mask(mask1, mask2):
 for dataset in ["winogrande", "piqa", "openbookqa", "arc_e", "mathqa"]:
     
     mask_list = {
+        "low_dimension": [],
         "IDEAL": [],
         "h2o": [],
         "A2SF_ZERO": [],
@@ -62,7 +63,7 @@ for dataset in ["winogrande", "piqa", "openbookqa", "arc_e", "mathqa"]:
             print(f"{mean:.3f}")
 
     plt.legend()
-    plt.title("Average Cosine Similarity of Heads")
+    plt.title(f"{dataset} / Average Cosine Similarity of Heads")
     plt.savefig(os.path.join(folder_path, f"{dataset}.png"))
     plt.xlabel("Layer Number")
     plt.ylabel("Similarity")
