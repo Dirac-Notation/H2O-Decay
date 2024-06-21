@@ -21,34 +21,51 @@ from transformers.models.llama.modeling_llama import LlamaRotaryEmbedding, Llama
 __all__ = ['convert_kvcache_llama_heavy_recent', 'LlamaAttention_heavy_hitter']
 
 
-def low_dimension_attention(query_states, key_states, head_dim, heavy_budget, recent_budget, penalty, penalty_mode):
+def low_dimension_attention(query_states, key_states, heavy_budget, recent_budget, penalty, penalty_mode):
 
     # attn_weights (BS, head, query, keys)
     dtype_attn_weights = query_states.dtype
-    seq_length = query_states.shape[-2]
-    state_dimension = query_states.shape[-1]
-    small_dimension = None
-    attn_shape = (query_states.shape[0], query_states.shape[1], seq_length, seq_length)
+    
+    batch_size = query_states.shape[0]
+    head_num = query_states.shape[1]
+    seq_length = query_states.shape[2]
+    state_dimension = query_states.shape[3]
+    
+    history_mask = torch.zeros(batch_size, head_num, seq_length, dtype=torch.float, device=query_states.device)
+    small_dimensions = None
+    attn_shape = (batch_size, head_num, seq_length, seq_length)
     
     cache_budget = heavy_budget + recent_budget
     
-    result_attnetion = torch.zeros(attn_shape, dtype=torch.float, device=query_states.device)
+    result_attention = torch.zeros(attn_shape, dtype=torch.float, device=query_states.device)
 
     for token_index in range(seq_length):
-        query = query_states[token_index]
-        keys = key_states[:token_index]
+        query = query_states[:,:,token_index,:].unsqueeze(2)
+        keys = key_states[:,:,:token_index+1,:]
         if token_index <= cache_budget:
-            tmp_attn = torch.softmax(torch.matmul(query, keys.transpose(2,3))/math.sqrt(head_dim))
-            result_attnetion[:,:,token_index,:token_index] = tmp_attn
+            tmp_attn = torch.softmax(torch.matmul(query, keys.transpose(2,3))/math.sqrt(state_dimension), dim=-1, dtype=torch.float32)
+            result_attention[:,:,token_index,:token_index+1] = tmp_attn.squeeze(2)
         else:
-            if small_dimension is None:
-                _, small_dimension = result_attnetion[:,:,:token_index-1,:token_index-1].abs().mean(dim=-2).topk(seq_length-6, largest=False, dim=-1)
-            history = result_attnetion[:,:,token_index-1,:]
-            _, necessary_tokens = history[:,:,token_index-1-recent_budget].topk(heavy_budget, dim=-1)
+            if small_dimensions is None:
+                _, small_dimensions = keys[:,:,:token_index-1,:].abs().mean(dim=-2).topk(state_dimension-6, largest=False, dim=-1)
             
-            for key_index in necessary_tokens:
+            if history_mask is not None:
+                history = history_mask*torch.inf + result_attention[:,:,token_index-1,:]
+            else:
+                history = result_attention[:,:,token_index-1,:]
             
-    return 
+            _, unnecessary_tokens = history[:,:,:token_index-recent_budget].topk(1, largest=False, dim=-1)
+            
+            for batch in range(batch_size):
+                for head in range(head_num):
+                    tk_idx = unnecessary_tokens[batch, head]
+                    small_dimension = small_dimensions[batch, head]
+                    keys[batch, head, tk_idx, small_dimension] = 0
+                    history_mask[batch, head, tk_idx] = 1
+            
+            import pdb; pdb.set_trace()
+            
+    return 0
 
 # def local_heavy_hitter_mask(attn_weights, heavy_budget, recent_budget, penalty, penalty_mode):
 
@@ -141,8 +158,8 @@ class LlamaAttention_heavy_hitter(nn.Module):
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
         
         ### Heavy + Recent
-        heavy_budget = int(self.heavy_budget_ratio * attn_weights.shape[-1])
-        recent_budget = int(self.recent_budget_ratio * attn_weights.shape[-1])
+        heavy_budget = int(self.heavy_budget_ratio * hidden_states.shape[-2])
+        recent_budget = int(self.recent_budget_ratio * hidden_states.shape[-2])
 
         bsz, q_len, _ = hidden_states.size()
             
@@ -161,6 +178,15 @@ class LlamaAttention_heavy_hitter(nn.Module):
             # reuse k, v, self_attention
             key_states = torch.cat([past_key_value[0], key_states], dim=2)
             value_states = torch.cat([past_key_value[1], value_states], dim=2)
+
+        low_dimension_attention(
+            query_states=query_states,
+            key_states=key_states,
+            heavy_budget=heavy_budget,
+            recent_budget=recent_budget,
+            penalty=self.penalty,
+            penalty_mode=self.penalty_mode
+        )
 
         past_key_value = (key_states, value_states) if use_cache else None
 

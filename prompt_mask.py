@@ -41,7 +41,7 @@ methods = {
     # "NOHIS_RECENT": (ratio-0.05, 0.05, 0.0, True, False),
     # "IDEAL": (ratio, 0.0, 1.0, True, True),
     # "IDEAL_VALUE": (ratio, 0.0, 1.0, False, True),
-    "low_dimension": (0.0, 1.0, 1.0, True, False),
+    "low_dimension": (0.1, 0.1, 1.0, True, False),
 }
 
 for name, (i, j, k, h, l) in tqdm(methods.items()):
