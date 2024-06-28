@@ -61,8 +61,9 @@ if __name__ == "__main__":
                     # "A2SF_TENDANCY_RECENT": (ratio-0.05, 0.05, 0.1, False, False),
                     # "NOHIS_ZERO": (ratio, 0.00, 0.0, True, False),
                     # "NOHIS_RECENT": (ratio-0.05, 0.05, 0.0, True, False),
-                    "IDEAL": (ratio, 0.00, 1.0, True, True),
-                    "IDEAL_VALUE": (ratio, 0.00, 1.0, False, True),
+                    # "IDEAL": (ratio, 0.00, 1.0, True, True),
+                    # "IDEAL_VALUE": (ratio, 0.00, 1.0, False, True),
+                    "A2SF_DIMENSION": (ratio, 0.00, 0.1, True, False),
                 }
 
                 for method, (select, local, penalty, penalty_mode, ideal) in config.items():

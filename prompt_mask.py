@@ -30,8 +30,8 @@ prompts = {
 ratio = 0.2
 
 methods = {
-    # "no_pruning": (0.0, 1.0, 1.0, True, False),
-    # "h2o": (ratio/2, ratio/2, 1.0, True, False),
+    # "NO_PRUNING": (0.0, 1.0, 1.0, True, False),
+    # "H2O": (ratio/2, ratio/2, 1.0, True, False),
     # "A2SF_ZERO": (ratio, 0.00, 0.1, True, False),
     # "A2SF_RECENT": (ratio-0.05, 0.05, 0.1, True, False),
     # "A2SF_TENDANCY_ZERO": (ratio, 0.00, 0.1, False, False),
@@ -41,7 +41,7 @@ methods = {
     # "NOHIS_RECENT": (ratio-0.05, 0.05, 0.0, True, False),
     # "IDEAL": (ratio, 0.0, 1.0, True, True),
     # "IDEAL_VALUE": (ratio, 0.0, 1.0, False, True),
-    "low_dimension": (0.1, 0.1, 1.0, True, False),
+    "LOW_DIMENSION": (ratio, 0.0, 0.1, True, False),
 }
 
 for name, (i, j, k, h, l) in tqdm(methods.items()):

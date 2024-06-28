@@ -7,10 +7,10 @@ from tqdm import tqdm
 
 dir_path = os.path.dirname(__file__)
 
-source_list = ["no_pruning", "low_dimension", "h2o", "IDEAL", "IDEAL_VALUE", "A2SF_ZERO", "A2SF_TENDANCY_RECENT", "NOHIS_ZERO"]
+source_list = ["NO_PRUNING", "H2O", "IDEAL", "A2SF_ZERO", "LOW_DIMENSION"]
 
-row = 3
-column = math.ceil(len(source_list)/3)
+column = 3
+row = math.ceil(len(source_list)/3)
 
 for dataset in ["mathqa", "winogrande", "piqa", "openbookqa", "arc_e"]:
     dataset_path = os.path.join(dir_path, "npy", dataset)
